@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { JobProvider, useJobContext } from './contexts/JobContext';
 import { scrapePageScript } from './services/scraper';
 import type { ScrapedJobData } from './services/scraper';
-import { analyzeJobWithAI, parseResumeWithAI, OpenAIError } from './services/openai';
+import { analyzeJob, parseResume } from './services/ai';
 import type { AnalysisResult, JobEntry, UserProfile } from './types';
 import { Button } from './components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from './components/ui/card';
@@ -62,7 +62,7 @@ const PopupContent = () => {
       }
       setJobData(result);
 
-      const aiResult = await analyzeJobWithAI(result, userProfile);
+      const aiResult = await analyzeJob(result, userProfile);
       setAnalysis(aiResult);
 
     } catch (err) {
@@ -88,7 +88,7 @@ const PopupContent = () => {
       }
 
       // Use description (full text) for resume parsing
-      const newProfile = await parseResumeWithAI(result.description, userProfile.apiKey);
+      const newProfile = await parseResume(result.description, userProfile);
       setParsedProfile(newProfile);
 
     } catch (err) {

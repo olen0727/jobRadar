@@ -11,6 +11,7 @@ export interface UserProfile {
     experience: string; // Work Experience Summary
     bio: string; // Autobiography / Self Introduction
     apiKey: string; // OpenAI Key
+    geminiApiKey?: string; // Gemini Key
     apiProvider: 'openai' | 'gemini'; // Future proofing
 }
 

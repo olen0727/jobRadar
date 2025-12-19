@@ -20,6 +20,7 @@ export const Settings: React.FC = () => {
         experience: '',
         bio: '',
         apiKey: '',
+        geminiApiKey: '',
         apiProvider: 'openai'
     });
     const [skillsInput, setSkillsInput] = useState('');
@@ -145,18 +146,58 @@ export const Settings: React.FC = () => {
                         />
                     </div>
 
-                    <div className="space-y-2 pt-4 border-t">
-                        <Label htmlFor="apiKey" className="text-destructive font-bold">OpenAI API Key</Label>
-                        <Input
-                            id="apiKey"
-                            name="apiKey"
-                            type="password"
-                            value={formData.apiKey}
-                            onChange={handleChange}
-                            placeholder="sk-..."
-                            required
-                        />
-                        <p className="text-xs text-muted-foreground">Stored locally in your browser. Never sent to our servers.</p>
+                    <div className="space-y-4 pt-4 border-t">
+                        <div className="space-y-2">
+                            <Label>AI Provider</Label>
+                            <div className="flex gap-2">
+                                <Button
+                                    type="button"
+                                    variant={formData.apiProvider === 'openai' ? 'default' : 'outline'}
+                                    onClick={() => setFormData(p => ({ ...p, apiProvider: 'openai' }))}
+                                    className="w-1/2"
+                                >
+                                    OpenAI (GPT-4)
+                                </Button>
+                                <Button
+                                    type="button"
+                                    variant={formData.apiProvider === 'gemini' ? 'default' : 'outline'}
+                                    onClick={() => setFormData(p => ({ ...p, apiProvider: 'gemini' }))}
+                                    className="w-1/2"
+                                >
+                                    Google Gemini
+                                </Button>
+                            </div>
+                        </div>
+
+                        {formData.apiProvider === 'openai' ? (
+                            <div className="space-y-2">
+                                <Label htmlFor="apiKey" className="text-destructive font-bold">OpenAI API Key</Label>
+                                <Input
+                                    id="apiKey"
+                                    name="apiKey"
+                                    type="password"
+                                    value={formData.apiKey}
+                                    onChange={handleChange}
+                                    placeholder="sk-..."
+                                    required={formData.apiProvider === 'openai'}
+                                />
+                                <p className="text-xs text-muted-foreground">Stored locally. Used for GPT-4o.</p>
+                            </div>
+                        ) : (
+                            <div className="space-y-2">
+                                <Label htmlFor="geminiApiKey" className="text-blue-600 font-bold">Gemini API Key</Label>
+                                <Input
+                                    id="geminiApiKey"
+                                    name="geminiApiKey"
+                                    type="password"
+                                    value={formData.geminiApiKey || ''}
+                                    onChange={handleChange}
+                                    placeholder="AIza..."
+                                    required={formData.apiProvider === 'gemini'}
+                                />
+                                <p className="text-xs text-muted-foreground">Stored locally. Used for Gemini 3 Flash Preview.</p>
+                            </div>
+                        )}
                     </div>
 
                     <Button type="submit" className="w-full">Save Settings</Button>
