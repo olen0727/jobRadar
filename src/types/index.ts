@@ -26,6 +26,7 @@ export type GeminiModel =
 
 export interface AnalysisResult {
     matchScore: number; // 0-100
+    matchScoreExplanation: string[]; // 2-3 points explaining the score
     summary: string;
     pros: string[];
     cons: string[];
@@ -40,7 +41,17 @@ export interface AnalysisResult {
     workPressure: string; // 工作壓力
     keySkills: string; // 主要技能
     commute: string; // 路程評估
+    commuteLabel: CommuteLabel; // 路程標籤
 }
+
+export type CommuteLabel =
+    | "你家旁邊" // < 10 mins
+    | "舒適距離" // 10-20 mins
+    | "標準通勤" // 20-40 mins
+    | "舟車勞頓" // 40-60 mins
+    | "極限通勤" // > 60 mins
+    | "遠端/外地" // Remote or Overseas
+    | "未知";    // Unknown
 
 export interface JobEntry {
     id: string; // UUID

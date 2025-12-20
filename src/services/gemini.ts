@@ -23,6 +23,7 @@ Output Format: JSON only. Do not output markdown.
 JSON Structure:
 {
   "matchScore": number, // 0-100
+  "matchScoreExplanation": ["Point 1", "Point 2"], // 2-3 points explaining why this score was given
   "summary": "One sentence summary of the role",
   "pros": ["Point 1", "Point 2"],
   "cons": ["Point 1", "Point 2"],
@@ -35,13 +36,22 @@ JSON Structure:
   "salaryPotential": "Estimated salary string",
   "workPressure": "Pressure estimate string",
   "keySkills": "Top 3 skills string",
-  "commute": "Commute estimate string"
+  "commute": "Commute estimate string",
+  "commuteLabel": "你家旁邊" | "舒適距離" | "標準通勤" | "舟車勞頓" | "極限通勤" | "遠端/外地" | "未知"
 }
 
 Constraint:
 - Be realistic.
 - Reply in Traditional Chinese (繁體中文).
 - If company is gambling/grey, risk = high/critical.
+- Commute Label Rules (Based on estimated time):
+  - < 10 mins: "你家旁邊"
+  - 10-20 mins: "舒適距離"
+  - 20-40 mins: "標準通勤"
+  - 40-60 mins: "舟車勞頓"
+  - > 60 mins: "極限通勤"
+  - Remote/Overseas: "遠端/外地"
+  - Unknown home location: "未知"
 `;
 
 const SYSTEM_INSTRUCTION_RESUME = `

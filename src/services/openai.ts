@@ -19,6 +19,7 @@ Output Format: JSON only. Do not output markdown.
 JSON Structure:
 {
   "matchScore": number, // 0-100 based on skills & goals match
+  "matchScoreExplanation": ["Point 1", "Point 2"], // 2-3 points explaining why this score was given
   "summary": "One sentence summary of the role",
   "pros": ["Point 1", "Point 2"],
   "cons": ["Point 1", "Point 2"],
@@ -31,7 +32,8 @@ JSON Structure:
   "salaryPotential": "Estimated annual salary (e.g. '1.5M - 1.8M TWD')",
   "workPressure": "Work pressure estimate (e.g. 'High - Oncall required', 'Low - 9 to 5')",
   "keySkills": "Top 3 critical skills required (e.g. 'React, Golang, AWS')",
-  "commute": "Estimated commute time/distance from user's home location (if provided). Guess based on city/district. (e.g. '~40 mins from Xinyi', 'Remote')"
+  "commute": "Estimated commute time/distance from user's home location (if provided). Guess based on city/district. (e.g. '~40 mins from Xinyi', 'Remote')",
+  "commuteLabel": "Label string based on strict rules below"
 }
 
 Constraint:
@@ -39,6 +41,14 @@ Constraint:
 - Be realistic about salary vs. workload.
 - If the JD is in Traditional Chinese, reply in Traditional Chinese.
 - For 'commute', use the User's Home Location to estimate roughly. If User Home is unknown, say 'Unknown'. If Job is Remote, say 'Remote'.
+- Commute Label Rules (Strictly follow these):
+  - < 10 mins: "你家旁邊"
+  - 10-20 mins: "舒適距離"
+  - 20-40 mins: "標準通勤"
+  - 40-60 mins: "舟車勞頓"
+  - > 60 mins: "極限通勤"
+  - Remote or Overseas: "遠端/外地"
+  - Unknown/Cannot Estimate: "未知"
 `;
 
 export const analyzeJobWithAI = async (

@@ -21,16 +21,17 @@
 │   │   └── UsageStats.tsx   # 用量統計 (Token Usage, Cost Estimation)
 │   ├── services/            # 核心業務邏輯與外部服務
 │   │   ├── ai.ts            # 統一 AI 服務介面 (Facade, Provider 路由)
-│   │   ├── gemini.ts        # Google Gemini API 實作 (含 Cost Calc)
-│   │   ├── openai.ts        # OpenAI API 實作 (含 Cost Calc)
+│   │   ├── gemini.ts        # Google Gemini API 實作 (含 Prompt, Cost Calc, Commute/Score Rules)
+│   │   ├── openai.ts        # OpenAI API 實作 (含 Prompt, Cost Calc, Commute/Score Rules)
 │   │   ├── scraper.ts       # DOM 爬蟲 (注入腳本) - 104/Yourator/LinkedIn
 │   │   └── storage.ts       # Chrome Local Storage 包裝器 (Profile, Jobs, UsageLogs)
+│   ├── sidepanel/           # Chrome SidePanel 邏輯 (可選)
 │   ├── types/               # 共用的 TypeScript 介面定義
-│   │   └── index.ts         # UserProfile, JobEntry, AnalysisResult, UsageLog
+│   │   └── index.ts         # UserProfile, JobEntry, AnalysisResult (含 CommuteLabel, MatchScoreExplanation), UsageLog
 │   ├── utils/               # 輔助函式
 │   │   └── pricing.ts       # 費率計算與定價表
 │   ├── App.css              # App 特定樣式
-│   ├── App.tsx              # 主要 Popup 邏輯 (選單、分析流程控制)
+│   ├── App.tsx              # 主要 Popup 邏輯 (選單、分析流程控制、結果展示含 Commute Badge & Score Reasoning)
 │   ├── index.css            # Tailwind CSS 全域樣式
 │   └── main.tsx             # 應用程式進入點
 ├── dist/                    # 編譯後的生產版本 (Build)
@@ -49,12 +50,12 @@
                     |         |
                     |         +--> [OpenAI API (GPT-4o)]
                     |         |
-                    |         +--> [Google Gemini API (Multi-Model)]
+                    +--> [Google Gemini API (Multi-Model)]
                     |
                     +--> [Chrome Local Storage]
                               |
                               +--> User Profile (含設定, Keys)
-                              +--> Saved Jobs (含 AI 分析結果)
+                              +--> Saved Jobs (含 AI 分析結果, Commute Label, Score Explanation)
                               +--> Usage Logs (含 Token 用量與預估費用)
 
 ## 3. 核心組件 (Core Components)
@@ -62,7 +63,10 @@
 ### 3.1. Chrome Extension 前端
 **技術棧**: React 18 + Vite + Tailwind CSS，直接渲染在 Chrome Popup 或 Options 頁面中。
 **職責**:
-- **Popup (`App.tsx`)**: 快速選單，提供「履歷解析」與「職缺分析」功能，並顯示即時的 AI 分析結果，可將結果「存入 Dashboard」。
+- **Popup (`App.tsx`)**: 快速選單，提供「履歷解析」與「職缺分析」功能，並顯示即時的 AI 分析結果。
+    - **Commute Badge**: 自動根據使用者位置與職缺地點估算通勤時間並分類 (如「你家旁邊」、「舒適距離」等)。
+    - **Score Reasoning**: 顯示 AI 給出該契合度分數的具體理由 (2-3 點)。
+    - **結果保存**: 可將分析結果「存入 Dashboard」。
 - **Options / Dashboard**: 
     - **Dashboard**: 查看已存職缺卡片，管理狀態 (Applied/Rejected)，刪除職缺。
     - **Settings**: 設定使用者個人資料 (Skill, Bio)、API Keys、選擇 AI 模型。
@@ -72,7 +76,7 @@
 **服務目錄** (`src/services/`):
 - `scraper.ts`: 注入到當前分頁中，用於提取文字內容 (JD 或履歷)。處理特定平台的邏輯 (104, Yourator, LinkedIn)。
 - `ai.ts`: 決策者，負責判斷要使用哪一個 AI 提供商 (OpenAI vs Gemini)。
-- `openai.ts` / `gemini.ts`: 無狀態 (Stateless) 的 API 客戶端。負責發送 Prompt 並透過 `utils/pricing.ts` 計算成本後寫入 Log。
+- `openai.ts` / `gemini.ts`: 無狀態 (Stateless) 的 API 客戶端。負責發送 Prompt (含詳細的 Prompt Constraint 與輸出格式要求) 並透過 `utils/pricing.ts` 計算成本後寫入 Log。
 - `storage.ts`: `chrome.storage.local` 的包裝器，處理所有持久化資料的存取。
 
 ## 4. 資料存儲 (Data Stores)
@@ -82,7 +86,7 @@
 **目的**: 在本地存儲所有使用者資料以確保隱私。完全無後端依賴 (Zero Backend)。
 **關鍵 Keys**:
 - `user_profile`: `UserProfile` (含 Model config, Keys)。
-- `saved_jobs`: `JobEntry[]` (職缺清單)。
+- `saved_jobs`: `JobEntry[]` (職缺清單，分析結果包含 `AnalysisResult` 結構)。
 - `usage_logs`: `UsageLog[]` (API 使用與費用歷史記錄)。
 
 ## 5. 外部整合 / API (External Integrations)

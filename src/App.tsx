@@ -192,7 +192,27 @@ const PopupContent = () => {
               <div className="flex gap-2">
                 <Badge variant={analysis.matchScore > 75 ? "default" : "secondary"}>Match: {analysis.matchScore}%</Badge>
                 <Badge variant="outline">Risk: {analysis.riskAnalysis.level}</Badge>
+                {analysis.commuteLabel && (
+                  <Badge variant={
+                    analysis.commuteLabel === "你家旁邊" || analysis.commuteLabel === "舒適距離" ? "default" :
+                      analysis.commuteLabel === "舟車勞頓" || analysis.commuteLabel === "極限通勤" ? "destructive" : "secondary"
+                  }>
+                    {analysis.commuteLabel}
+                  </Badge>
+                )}
               </div>
+              {/* Match Score Reason */}
+              {analysis.matchScoreExplanation && analysis.matchScoreExplanation.length > 0 && (
+                <div className="text-xs text-muted-foreground mt-2 bg-muted/40 p-2 rounded">
+                  <span className="font-semibold block mb-1">Score Reason:</span>
+                  <ul className="list-disc list-inside space-y-0.5">
+                    {analysis.matchScoreExplanation.map((reason, i) => (
+                      <li key={i}>{reason}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+              {analysis.commute && <p className="text-xs text-muted-foreground mt-1">Commute: {analysis.commute}</p>}
 
               <Card className="bg-primary/5 border-primary/20">
                 <CardContent className="p-3 text-sm">{analysis.strategicAdvice}</CardContent>

@@ -20,7 +20,7 @@ export const parseResume = async (text: string, profile: UserProfile): Promise<U
     if (provider === 'gemini') {
         if (!profile.geminiApiKey) throw new Error("Gemini API Key is missing. Please check Settings.");
         // We pass the key directly as the specialized functions expect string
-        return parseResumeWithGemini(text, profile.geminiApiKey);
+        return parseResumeWithGemini(text, profile, profile.geminiApiKey);
     }
 
     if (!profile.apiKey) throw new Error("OpenAI API Key is missing. Please check Settings.");
