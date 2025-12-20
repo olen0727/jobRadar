@@ -12,8 +12,17 @@ export interface UserProfile {
     bio: string; // Autobiography / Self Introduction
     apiKey: string; // OpenAI Key
     geminiApiKey?: string; // Gemini Key
+    geminiModel?: GeminiModel; // Selected Gemini Model
     apiProvider: 'openai' | 'gemini'; // Future proofing
 }
+
+export type GeminiModel =
+    | 'gemini-3-pro-preview'
+    | 'gemini-3-flash-preview'
+    | 'gemini-2.5-flash'
+    | 'gemini-2.5-flash-lite'
+    | 'gemini-2.0-flash'
+    | 'gemini-2.0-flash-lite';
 
 export interface AnalysisResult {
     matchScore: number; // 0-100

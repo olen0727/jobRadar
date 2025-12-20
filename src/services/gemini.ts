@@ -2,8 +2,6 @@ import type { UserProfile, AnalysisResult } from '../types';
 import type { ScrapedJobData } from './scraper';
 import { storage } from './storage';
 
-const MODEL_NAME = 'gemini-3-flash-preview'; // User specified
-
 export class GeminiError extends Error {
     constructor(message: string) {
         super(message);
@@ -73,7 +71,12 @@ export const analyzeJobWithGemini = async (
         throw new GeminiError('Gemini API Key is missing.');
     }
 
-    const userContent = `
+    // Use user selected model or default to 3-flash
+    const modelName = profile.geminiModel || 'gemini-3-flash-preview';
+
+    const prompt = `
+${SYSTEM_INSTRUCTION_JOB}
+
 USER PROFILE:
 Name: ${profile.name}
 Role: ${profile.targetRole}
@@ -81,7 +84,7 @@ Exp: ${profile.yearsOfExperience} years
 Skills: ${profile.skills.join(', ')}
 Goals: ${profile.financialGoal}
 Pref: ${profile.preferredWorkStyle}
-Home: ${profile.homeLocation}
+Home: ${profile.homeLocation || 'Not provided'}
 Experience: ${profile.experience}
 Bio: ${profile.bio}
 
@@ -93,22 +96,19 @@ Location: ${job.location}
 Salary: ${job.salary}
 
 Content:
-${job.description.substring(0, 30000)}
+${job.description.substring(0, 25000)}
 `;
 
     try {
-        const url = `https://generativelanguage.googleapis.com/v1beta/models/${MODEL_NAME}:generateContent?key=${profile.geminiApiKey}`;
+        const url = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${profile.geminiApiKey}`;
 
         const response = await fetch(url, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
                 contents: [{
-                    parts: [{ text: userContent }]
+                    parts: [{ text: prompt }]
                 }],
-                system_instruction: {
-                    parts: [{ text: SYSTEM_INSTRUCTION_JOB }]
-                },
                 generationConfig: GENERATE_CONFIG
             })
         });
@@ -130,7 +130,7 @@ ${job.description.substring(0, 30000)}
                 id: crypto.randomUUID(),
                 timestamp: new Date().toISOString(),
                 provider: 'gemini',
-                model: MODEL_NAME,
+                model: modelName,
                 operation: 'job_analysis',
                 inputTokens: usage.promptTokenCount,
                 outputTokens: usage.candidatesTokenCount,
@@ -150,12 +150,16 @@ ${job.description.substring(0, 30000)}
 
 export const parseResumeWithGemini = async (
     resumeText: string,
+    profile: UserProfile,
     apiKey: string
 ): Promise<UserProfile> => {
     if (!apiKey) throw new GeminiError('Gemini API Key is missing.');
 
     try {
-        const url = `https://generativelanguage.googleapis.com/v1beta/models/${MODEL_NAME}:generateContent?key=${apiKey}`;
+        // Use user selected model or default to 3-flash
+        const modelName = profile.geminiModel || 'gemini-3-flash-preview';
+
+        const url = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${apiKey}`;
 
         const response = await fetch(url, {
             method: 'POST',
@@ -191,7 +195,7 @@ export const parseResumeWithGemini = async (
                 id: crypto.randomUUID(),
                 timestamp: new Date().toISOString(),
                 provider: 'gemini',
-                model: MODEL_NAME,
+                model: modelName,
                 operation: 'resume_parsing',
                 inputTokens: usage.promptTokenCount,
                 outputTokens: usage.candidatesTokenCount,

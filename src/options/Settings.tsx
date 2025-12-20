@@ -126,10 +126,10 @@ export const Settings: React.FC = () => {
                         <Label htmlFor="experience">Work Experience (經歷)</Label>
                         <Textarea
                             id="experience"
-                            name="experience" // Added name for handleChange
+                            name="experience"
                             placeholder="Paste your work experience here or use Resume Parser..."
-                            value={formData.experience || ''} // Changed to formData
-                            onChange={handleChange} // Changed to handleChange
+                            value={formData.experience || ''}
+                            onChange={handleChange}
                             className="h-24"
                         />
                     </div>
@@ -138,10 +138,10 @@ export const Settings: React.FC = () => {
                         <Label htmlFor="bio">Biography (自傳)</Label>
                         <Textarea
                             id="bio"
-                            name="bio" // Added name for handleChange
+                            name="bio"
                             placeholder="Paste your bio/autobiography here..."
-                            value={formData.bio || ''} // Changed to formData
-                            onChange={handleChange} // Changed to handleChange
+                            value={formData.bio || ''}
+                            onChange={handleChange}
                             className="h-24"
                         />
                     </div>
@@ -184,18 +184,38 @@ export const Settings: React.FC = () => {
                                 <p className="text-xs text-muted-foreground">Stored locally. Used for GPT-4o.</p>
                             </div>
                         ) : (
-                            <div className="space-y-2">
-                                <Label htmlFor="geminiApiKey" className="text-blue-600 font-bold">Gemini API Key</Label>
-                                <Input
-                                    id="geminiApiKey"
-                                    name="geminiApiKey"
-                                    type="password"
-                                    value={formData.geminiApiKey || ''}
-                                    onChange={handleChange}
-                                    placeholder="AIza..."
-                                    required={formData.apiProvider === 'gemini'}
-                                />
-                                <p className="text-xs text-muted-foreground">Stored locally. Used for Gemini 3 Flash Preview.</p>
+                            <div className="space-y-4">
+                                <div className="space-y-2">
+                                    <Label htmlFor="geminiApiKey" className="text-blue-600 font-bold">Gemini API Key</Label>
+                                    <Input
+                                        id="geminiApiKey"
+                                        name="geminiApiKey"
+                                        type="password"
+                                        value={formData.geminiApiKey || ''}
+                                        onChange={handleChange}
+                                        placeholder="AIza..."
+                                        required={formData.apiProvider === 'gemini'}
+                                    />
+                                    <p className="text-xs text-muted-foreground">Stored locally.</p>
+                                </div>
+                                <div className="space-y-2">
+                                    <Label htmlFor="geminiModel">Gemini Model</Label>
+                                    <select
+                                        id="geminiModel"
+                                        name="geminiModel"
+                                        className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                                        value={formData.geminiModel || 'gemini-3-flash-preview'}
+                                        onChange={(e) => setFormData(prev => ({ ...prev, geminiModel: e.target.value as any }))}
+                                    >
+                                        <option value="gemini-3-pro-preview">Gemini 3 Pro (Preview)</option>
+                                        <option value="gemini-3-flash-preview">Gemini 3 Flash (Preview)</option>
+                                        <option value="gemini-2.5-flash">Gemini 2.5 Flash</option>
+                                        <option value="gemini-2.5-flash-lite">Gemini 2.5 Flash-Lite</option>
+                                        <option value="gemini-2.0-flash">Gemini 2.0 Flash</option>
+                                        <option value="gemini-2.0-flash-lite">Gemini 2.0 Flash-Lite</option>
+                                    </select>
+                                    <p className="text-xs text-muted-foreground">Select the model variant to use.</p>
+                                </div>
                             </div>
                         )}
                     </div>
