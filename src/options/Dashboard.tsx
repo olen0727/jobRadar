@@ -379,6 +379,14 @@ const JobCard: React.FC<JobCardProps> = ({ job, isExpanded, onUpdateStatus, onDe
                                 </p>
                             </div>
                         </div>
+
+                        <div className="pt-2">
+                            <div className="bg-slate-900 rounded-lg p-3 px-4 shadow-inner border border-slate-800">
+                                <p className="text-slate-200 text-sm leading-relaxed font-medium italic">
+                                    "{analysis?.strategicAdvice || '無特定建議'}"
+                                </p>
+                            </div>
+                        </div>
                     </div>
                 )}
             </div>

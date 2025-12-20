@@ -32,13 +32,13 @@ JSON Structure:
     "level": "low" | "medium" | "high" | "critical",
     "flags": ["List specific red flags like 'Gambling terms', 'Unclear business model', 'High concurrency without product']"
   },
-  "strategicAdvice": "Direct advice. E.g., 'Apply immediately', 'Skip - high risk', 'Good for backup'.",
-  "coreValue": "Value to the user (e.g. 'Skill Growth', 'High Pay', 'Stability')",
-  "salaryPotential": "Estimated annual salary (e.g. '1.5M - 1.8M TWD')",
-  "workPressure": "Work pressure estimate (e.g. 'High - Oncall required', 'Low - 9 to 5')",
-  "keySkills": "Top 3 critical skills required (e.g. 'React, Golang, AWS')",
-  "commuteDescription": "Estimated commute time/distance from user's home location (if provided). Guess based on city/district. (e.g. '~40 mins from Xinyi', 'Remote')",
-  "commuteLabel": "Label string based on strict rules below",
+  "strategicAdvice": "給用戶的直接建議。例如：'立即申請'、'不建議 - 風險過高'、'可作為保底選項'。",
+  "coreValue": "此職位對用戶的具體價值 (例如：'技術成長', '薪資提升', '產業跳板')",
+  "salaryPotential": "預估年薪範圍 (例如：'150萬 - 180萬 TWD')",
+  "workPressure": "工作壓力預估 (例如：'高 - 需輪值', '低 - 準時下班')",
+  "keySkills": "最重要的 3 個關鍵技能 (例如：'React, Golang, AWS')",
+  "commuteDescription": "預估通勤時間，需包含：1. 大眾運輸時間 2. 自行開車/騎車時間 (例如：'大眾運輸約 40 分鐘，開車約 25 分鐘')",
+  "commuteLabel": "根據上述兩種方式中『較短』的時間來選擇標籤",
   "extractedLocation": "string", // If the scraper missed the address, find it in the content
   "extractedSalary": "string" // If the scraper missed the salary, find it in the content
 }
@@ -47,8 +47,7 @@ Constraint:
 - If the company looks like a gambling/betting/grey industry (keywords: 運維, 項目, 高併發 without specific product, customer service for gaming, 菲律賓/柬埔寨 location), set risk level to 'high' or 'critical'.
 - Be realistic about salary vs. workload.
 - If the JD is in Traditional Chinese, reply in Traditional Chinese.
-- For 'commuteDescription', use the User's Home Location to estimate roughly. If User Home is unknown, say 'Unknown'. If Job is Remote, say 'Remote'.
-- Commute Label Rules (Strictly follow these):
+- Commute Label Rules (基於大眾運輸與開車中較短的時間):
   - < 10 mins: "你家旁邊"
   - 10-20 mins: "舒適距離"
   - 20-40 mins: "標準通勤"

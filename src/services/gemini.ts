@@ -37,13 +37,13 @@ JSON Structure:
     "level": "low" | "medium" | "high" | "critical",
     "flags": ["string"]
   },
-  "strategicAdvice": "Direct advice string",
-  "coreValue": "Value string",
-  "salaryPotential": "Estimated salary string",
-  "workPressure": "Pressure estimate string",
-  "keySkills": "Top 3 skills string",
-  "commuteLabel": "你家旁邊" | "舒適距離" | "標準通勤" | "舟車勞頓" | "極限通勤" | "遠端/外地" | "未知",
-  "commuteDescription": "String explaining the commute detail based on home location",
+  "strategicAdvice": "給用戶的直接建議。例如：'立即申請'、'不建議 - 風險過高'、'可作為保底選項'。",
+  "coreValue": "此職位對用戶的具體價值 (例如：'技術成長', '薪資提升', '產業跳板')",
+  "salaryPotential": "預估年薪範圍 (例如：'150萬 - 180萬 TWD')",
+  "workPressure": "工作壓力預估 (例如：'高 - 需輪值', '低 - 準時下班')",
+  "keySkills": "最重要的 3 個關鍵技能 (例如：'React, Golang, AWS')",
+  "commuteLabel": "根據大眾運輸與開車/騎車中『較短』的時間來選擇標籤",
+  "commuteDescription": "預估通勤時間內容，需包含 1.大眾運輸 2.開車/騎車 (例如：'大眾運輸 40分，騎車 20分')",
   "extractedLocation": "string", // If the scraper missed the address, find it in the content
   "extractedSalary": "string" // If the scraper missed the salary, find it in the content
 }
@@ -52,14 +52,14 @@ Constraint:
 - Be realistic.
 - Reply in Traditional Chinese (繁體中文).
 - If company is gambling/grey, risk = high/critical.
-- Commute Label Rules (Based on estimated time):
+- Commute Label Rules (基於大眾運輸與開車中較短的時間):
   - < 10 mins: "你家旁邊"
   - 10-20 mins: "舒適距離"
   - 20-40 mins: "標準通勤"
   - 40-60 mins: "舟車勞頓"
   - > 60 mins: "極限通勤"
-  - Remote/Overseas: "遠端/外地"
-  - Unknown home location: "未知"
+  - 遠端/海外: "遠端/外地"
+  - 未知住址: "未知"
 `;
 
 export const SYSTEM_INSTRUCTION_RESUME = `
