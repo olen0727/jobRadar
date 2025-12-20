@@ -78,14 +78,14 @@ export const Dashboard: React.FC = () => {
                                                 <span>•</span>
                                                 <span>{job.location}</span>
                                                 <span>•</span>
-                                                <span>{job.salary}</span>
+                                                <span>{job.salaryRange}</span>
                                             </div>
                                             <div className="flex items-center gap-4 text-sm mt-2">
                                                 <div className={`font-bold flex items-center gap-1 ${getMatchScoreColor(job.analysis?.matchScore || 0)}`}>
                                                     Match: {job.analysis?.matchScore || '?'}%
                                                 </div>
                                                 <div className="text-muted-foreground text-xs">
-                                                    Added: {new Date(job.dateAdded).toLocaleDateString()}
+                                                    Added: {new Date(job.createdAt).toLocaleDateString()}
                                                 </div>
                                             </div>
                                         </div>
