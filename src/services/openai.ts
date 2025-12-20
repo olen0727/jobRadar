@@ -1,6 +1,7 @@
 import type { UserProfile, AnalysisResult } from '../types';
 import type { ScrapedJobData } from './scraper';
 import { storage } from './storage';
+import { calculateCost } from '../utils/pricing';
 
 export class OpenAIError extends Error {
     constructor(message: string) {
@@ -103,15 +104,18 @@ ${job.description.substring(0, 25000)}
 
         // Log Usage
         if (result.usage) {
+            const cost = calculateCost('openai', 'gpt-4o', result.usage.prompt_tokens, result.usage.completion_tokens);
+
             await storage.saveUsageLog({
                 id: crypto.randomUUID(),
                 timestamp: new Date().toISOString(),
                 provider: 'openai',
-                model: 'gpt-4o', // or result.model
+                model: 'gpt-4o',
                 operation: 'job_analysis',
                 inputTokens: result.usage.prompt_tokens,
                 outputTokens: result.usage.completion_tokens,
-                totalTokens: result.usage.total_tokens
+                totalTokens: result.usage.total_tokens,
+                cost
             });
         }
 
@@ -186,6 +190,8 @@ export const parseResumeWithAI = async (
 
         // Log Usage
         if (result.usage) {
+            const cost = calculateCost('openai', 'gpt-4o', result.usage.prompt_tokens, result.usage.completion_tokens);
+
             await storage.saveUsageLog({
                 id: crypto.randomUUID(),
                 timestamp: new Date().toISOString(),
@@ -194,7 +200,8 @@ export const parseResumeWithAI = async (
                 operation: 'resume_parsing',
                 inputTokens: result.usage.prompt_tokens,
                 outputTokens: result.usage.completion_tokens,
-                totalTokens: result.usage.total_tokens
+                totalTokens: result.usage.total_tokens,
+                cost
             });
         }
 

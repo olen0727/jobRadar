@@ -66,4 +66,5 @@ export interface UsageLog {
     inputTokens: number;
     outputTokens: number;
     totalTokens: number;
+    cost?: number; // Estimated cost in USD
 }

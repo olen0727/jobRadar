@@ -31,8 +31,12 @@ const PopupContent = () => {
 
   useEffect(() => {
     // If no API Key, stay on menu or redirect
-    if (!contextLoading && userProfile && !userProfile.apiKey) {
-      // Allow menu access, but warn on actions
+    if (!contextLoading && userProfile) {
+      if (userProfile.apiProvider === 'gemini' && !userProfile.geminiApiKey) {
+        // Warn (Optional UI feedback could go here)
+      } else if (userProfile.apiProvider === 'openai' && !userProfile.apiKey) {
+        // Warn
+      }
     }
   }, [contextLoading, userProfile]);
 
@@ -54,7 +58,12 @@ const PopupContent = () => {
     setLoading(true);
     setError(null);
     try {
-      if (!userProfile?.apiKey) throw new Error('Please set API Key in Options first.');
+      if (userProfile?.apiProvider === 'gemini') {
+        if (!userProfile.geminiApiKey) throw new Error('Please set Gemini API Key in Options first.');
+      } else {
+        // Default to OpenAI
+        if (!userProfile?.apiKey) throw new Error('Please set OpenAI API Key in Options first.');
+      }
 
       const result = await getActiveTabContent();
       if (!result || !result.description || result.description.length < 50) {
@@ -80,7 +89,12 @@ const PopupContent = () => {
     setProfileSaved(false);
 
     try {
-      if (!userProfile?.apiKey) throw new Error('Please set API Key in Options first.');
+      if (userProfile?.apiProvider === 'gemini') {
+        if (!userProfile.geminiApiKey) throw new Error('Please set Gemini API Key in Options first.');
+      } else {
+        // Default to OpenAI
+        if (!userProfile?.apiKey) throw new Error('Please set OpenAI API Key in Options first.');
+      }
 
       const result = await getActiveTabContent();
       if (!result || !result.description || result.description.length < 50) {

@@ -1,6 +1,7 @@
 import type { UserProfile, AnalysisResult } from '../types';
 import type { ScrapedJobData } from './scraper';
 import { storage } from './storage';
+import { calculateCost } from '../utils/pricing';
 
 export class GeminiError extends Error {
     constructor(message: string) {
@@ -126,6 +127,8 @@ ${job.description.substring(0, 25000)}
         // Log Usage
         const usage = result.usageMetadata;
         if (usage) {
+            const cost = calculateCost('gemini', modelName, usage.promptTokenCount, usage.candidatesTokenCount);
+
             await storage.saveUsageLog({
                 id: crypto.randomUUID(),
                 timestamp: new Date().toISOString(),
@@ -134,7 +137,8 @@ ${job.description.substring(0, 25000)}
                 operation: 'job_analysis',
                 inputTokens: usage.promptTokenCount,
                 outputTokens: usage.candidatesTokenCount,
-                totalTokens: usage.totalTokenCount
+                totalTokens: usage.totalTokenCount,
+                cost
             });
         }
 
@@ -191,6 +195,8 @@ export const parseResumeWithGemini = async (
         // Log Usage
         const usage = result.usageMetadata;
         if (usage) {
+            const cost = calculateCost('gemini', modelName, usage.promptTokenCount, usage.candidatesTokenCount);
+
             await storage.saveUsageLog({
                 id: crypto.randomUUID(),
                 timestamp: new Date().toISOString(),
@@ -199,7 +205,8 @@ export const parseResumeWithGemini = async (
                 operation: 'resume_parsing',
                 inputTokens: usage.promptTokenCount,
                 outputTokens: usage.candidatesTokenCount,
-                totalTokens: usage.totalTokenCount
+                totalTokens: usage.totalTokenCount,
+                cost
             });
         }
 

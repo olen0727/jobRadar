@@ -39,7 +39,8 @@ export const JobProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
     const saveProfile = async (profile: UserProfile) => {
         await storage.set({ user_profile: profile });
-        setUserProfile(profile);
+        // Reload to ensure state is in sync with storage
+        await loadData();
     };
 
     const addJob = async (job: JobEntry) => {
