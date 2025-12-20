@@ -8,7 +8,7 @@ import { Button } from './components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from './components/ui/card';
 import { Badge } from './components/ui/badge';
 import { Skeleton } from './components/ui/skeleton';
-import { AlertCircle, Briefcase, CheckCircle, ExternalLink, ShieldAlert, Sparkles, XCircle, FileText, Search, ArrowLeft } from 'lucide-react';
+import { AlertCircle, Briefcase, CheckCircle, Settings, ShieldAlert, Sparkles, XCircle, FileText, Search, ArrowLeft } from 'lucide-react';
 import { cn } from './lib/utils';
 import { v4 as uuidv4 } from 'uuid';
 
@@ -171,7 +171,7 @@ const PopupContent = () => {
           <div className="flex items-center gap-2 font-bold text-lg">
             <Briefcase className="w-5 h-5" /> JobRadar AI
           </div>
-          <Button variant="ghost" size="icon" onClick={openDashboard}><ExternalLink className="w-4 h-4" /></Button>
+          <Button variant="ghost" size="icon" onClick={openDashboard} title="Settings"><Settings className="w-4 h-4" /></Button>
         </header>
 
         <div className="flex-1 flex flex-col items-center justify-center text-center gap-4">
@@ -193,32 +193,7 @@ const PopupContent = () => {
             <Search className="w-5 h-5 mr-2" />
             手動分析職缺 (Job Analyze)
           </Button>
-          <Button variant="ghost" className="w-full text-xs text-slate-400" onClick={() => setMode('menu')}>返回主選單</Button>
         </div>
-      </div>
-    );
-  }
-
-  // VIEW: MENU
-  if (mode === 'menu') {
-    return (
-      <div className="w-[400px] min-h-[500px] bg-background text-foreground flex flex-col">
-        <header className="p-4 border-b flex justify-between items-center bg-muted/30">
-          <div className="flex items-center gap-2 font-bold text-lg">
-            <Briefcase className="w-5 h-5" /> JobRadar AI
-          </div>
-          <Button variant="ghost" size="icon" onClick={openDashboard}><ExternalLink className="w-4 h-4" />setting</Button>
-        </header>
-        <main className="flex-1 p-6 flex flex-col gap-4 justify-center">
-          <Button className="h-24 text-lg flex flex-col gap-2" variant="outline" onClick={startResumeParsing}>
-            <FileText className="w-8 h-8" />
-            履歷解析 (Resume Parse)
-          </Button>
-          <Button className="h-24 text-lg flex flex-col gap-2" onClick={startJobAnalysis}>
-            <Search className="w-8 h-8" />
-            職缺分析 (Job Analyze)
-          </Button>
-        </main>
       </div>
     );
   }
@@ -244,7 +219,7 @@ const PopupContent = () => {
         >
           前往設定頁面
         </Button>
-        <Button variant="ghost" className="text-xs text-muted-foreground" onClick={() => setMode('menu')}>返回</Button>
+        <Button variant="ghost" className="text-xs text-muted-foreground" onClick={() => setMode('unknown')}>手動選擇功能</Button>
       </div>
     );
   }
@@ -254,7 +229,7 @@ const PopupContent = () => {
     return (
       <div className="w-[400px] min-h-[500px] bg-background text-foreground flex flex-col">
         <header className="p-3 border-b flex items-center gap-2 bg-muted/30">
-          <Button variant="ghost" size="icon" onClick={() => setMode('menu')}><ArrowLeft className="w-4 h-4" /></Button>
+          <Button variant="ghost" size="icon" onClick={() => setMode('unknown')}><ArrowLeft className="w-4 h-4" /></Button>
           <span className="font-bold">職缺分析 (Job Analysis)</span>
         </header>
         <main className="p-4 space-y-4 flex-1 overflow-auto">
@@ -318,7 +293,7 @@ const PopupContent = () => {
   return (
     <div className="w-[400px] min-h-[500px] bg-background text-foreground flex flex-col">
       <header className="p-3 border-b flex items-center gap-2 bg-muted/30">
-        <Button variant="ghost" size="icon" onClick={() => setMode('menu')}><ArrowLeft className="w-4 h-4" /></Button>
+        <Button variant="ghost" size="icon" onClick={() => setMode('unknown')}><ArrowLeft className="w-4 h-4" /></Button>
         <span className="font-bold">履歷解析 (Resume Parse)</span>
       </header>
       <main className="p-4 space-y-4 flex-1 overflow-auto">
