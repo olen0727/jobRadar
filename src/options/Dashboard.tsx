@@ -2,15 +2,13 @@ import React, { useState } from 'react';
 import { useJobContext } from '../contexts/JobContext';
 import { Card } from '../components/ui/card';
 import { Button } from '../components/ui/button';
-import { ExternalLink, CheckCircle, XCircle, Clock, AlertTriangle, LayoutGrid, List as ListIcon } from 'lucide-react';
-import { cn } from '../lib/utils';
+import { ExternalLink, CheckCircle, XCircle, Clock, LayoutGrid, List as ListIcon } from 'lucide-react';
 import type { JobEntry } from '../types';
 
 export const Dashboard: React.FC = () => {
     const { savedJobs, deleteJob, updateJobStatus, loading } = useJobContext();
     const [filter, setFilter] = useState<'all' | 'saved' | 'applied' | 'offer' | 'rejected'>('all');
     const [showAllDetails, setShowAllDetails] = useState(false);
-    const [viewMode, setViewMode] = useState<'list' | 'grid'>('list');
 
     if (loading) {
         return <div className="p-8 text-center">Loading jobs...</div>;
@@ -25,35 +23,13 @@ export const Dashboard: React.FC = () => {
 
     return (
         <div className="space-y-6">
-            {/* 頂部工具列：獨立於卡片之外，增加清晰度 */}
+            {/* 頂部工具列 */}
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
                 <div>
                     <h2 className="text-xl font-bold tracking-tight text-slate-900">My Jobs</h2>
                     <p className="text-sm text-slate-500 font-medium">Manage and track your job applications.</p>
                 </div>
                 <div className="flex flex-wrap items-center gap-2">
-                    {/* 視圖切換按鈕 */}
-                    <div className="flex gap-1 bg-slate-100 p-1 rounded-lg mr-2">
-                        <Button
-                            variant={viewMode === 'list' ? 'default' : 'ghost'}
-                            size="icon"
-                            className="h-8 w-8 transition-all"
-                            onClick={() => setViewMode('list')}
-                            title="列表視圖"
-                        >
-                            <ListIcon className="w-4 h-4" />
-                        </Button>
-                        <Button
-                            variant={viewMode === 'grid' ? 'default' : 'ghost'}
-                            size="icon"
-                            className="h-8 w-8 transition-all"
-                            onClick={() => setViewMode('grid')}
-                            title="卡片視圖"
-                        >
-                            <LayoutGrid className="w-4 h-4" />
-                        </Button>
-                    </div>
-
                     <div className="flex gap-1 bg-slate-100 p-1 rounded-lg">
                         {(['all', 'saved', 'applied', 'offer', 'rejected'] as const).map((s) => (
                             <Button
@@ -67,16 +43,31 @@ export const Dashboard: React.FC = () => {
                             </Button>
                         ))}
                     </div>
+
                     <div className="h-6 w-px bg-slate-200 mx-1 hidden sm:block" />
-                    <Button
-                        variant={showAllDetails ? 'default' : 'outline'}
-                        size="sm"
-                        className="h-8 gap-2 text-xs"
-                        onClick={() => setShowAllDetails(!showAllDetails)}
-                    >
-                        <AlertTriangle className={`w-3.5 h-3.5 ${showAllDetails ? 'animate-pulse' : ''}`} />
-                        {showAllDetails ? '全頁詳細' : '全頁簡短'}
-                    </Button>
+
+                    <div className="flex gap-1 bg-slate-100 p-1 rounded-lg">
+                        <Button
+                            variant={!showAllDetails ? 'default' : 'ghost'}
+                            size="sm"
+                            className="h-8 gap-1.5 text-xs px-3 transition-all"
+                            onClick={() => setShowAllDetails(false)}
+                            title="兩欄卡片 - 簡短摘要"
+                        >
+                            <LayoutGrid className="w-3.5 h-3.5" />
+                            簡短
+                        </Button>
+                        <Button
+                            variant={showAllDetails ? 'default' : 'ghost'}
+                            size="sm"
+                            className="h-8 gap-1.5 text-xs px-3 transition-all"
+                            onClick={() => setShowAllDetails(true)}
+                            title="單欄列表 - 詳細資訊"
+                        >
+                            <ListIcon className="w-3.5 h-3.5" />
+                            詳細
+                        </Button>
+                    </div>
                 </div>
             </div>
 
@@ -87,7 +78,7 @@ export const Dashboard: React.FC = () => {
                         {filter === 'all' ? 'No saved jobs found. Start by pinning some jobs!' : `No jobs found with status "${filter}".`}
                     </div>
                 ) : (
-                    <div className={`grid gap-6 ${viewMode === 'grid' ? 'grid-cols-1 md:grid-cols-2' : 'grid-cols-1'}`}>
+                    <div className={`grid gap-6 ${!showAllDetails ? 'grid-cols-1 md:grid-cols-2' : 'grid-cols-1'}`}>
                         {filteredJobs.map((job) => (
                             <JobCard
                                 key={job.id}
