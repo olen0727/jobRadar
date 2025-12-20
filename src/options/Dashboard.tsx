@@ -9,6 +9,7 @@ import type { JobEntry } from '../types';
 export const Dashboard: React.FC = () => {
     const { savedJobs, deleteJob, updateJobStatus, loading } = useJobContext();
     const [filter, setFilter] = useState<'all' | 'applied' | 'interviewing' | 'rejected' | 'offer'>('all');
+    const [showAllDetails, setShowAllDetails] = useState(false);
 
     if (loading) {
         return <div className="p-8 text-center">Loading jobs...</div>;
@@ -21,23 +22,35 @@ export const Dashboard: React.FC = () => {
         <div className="space-y-6">
             <Card>
                 <CardHeader>
-                    <div className="flex items-center justify-between">
+                    <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                         <div>
                             <CardTitle>My Jobs</CardTitle>
                             <CardDescription>Manage and track your job applications.</CardDescription>
                         </div>
-                        <div className="flex gap-2">
-                            {(['all', 'applied', 'interviewing', 'offer', 'rejected'] as const).map((s) => (
-                                <Button
-                                    key={s}
-                                    variant={filter === s ? 'default' : 'outline'}
-                                    size="sm"
-                                    onClick={() => setFilter(s)}
-                                    className="capitalize"
-                                >
-                                    {s}
-                                </Button>
-                            ))}
+                        <div className="flex flex-wrap items-center gap-2">
+                            <div className="flex gap-1 bg-muted/30 p-1 rounded-lg">
+                                {(['all', 'applied', 'interviewing', 'offer', 'rejected'] as const).map((s) => (
+                                    <Button
+                                        key={s}
+                                        variant={filter === s ? 'default' : 'ghost'}
+                                        size="sm"
+                                        onClick={() => setFilter(s)}
+                                        className="capitalize h-8 px-3 text-xs"
+                                    >
+                                        {s}
+                                    </Button>
+                                ))}
+                            </div>
+                            <div className="h-6 w-px bg-border mx-1 hidden sm:block" />
+                            <Button
+                                variant={showAllDetails ? 'default' : 'outline'}
+                                size="sm"
+                                className="h-8 gap-2 text-xs"
+                                onClick={() => setShowAllDetails(!showAllDetails)}
+                            >
+                                <AlertTriangle className={`w-3.5 h-3.5 ${showAllDetails ? 'animate-pulse' : ''}`} />
+                                {showAllDetails ? '全頁詳細' : '全頁簡短'}
+                            </Button>
                         </div>
                     </div>
                 </CardHeader>
@@ -52,6 +65,7 @@ export const Dashboard: React.FC = () => {
                                 <JobCard
                                     key={job.id}
                                     job={job}
+                                    isExpanded={showAllDetails}
                                     onUpdateStatus={updateJobStatus}
                                     onDelete={deleteJob}
                                 />
@@ -66,12 +80,12 @@ export const Dashboard: React.FC = () => {
 
 interface JobCardProps {
     job: JobEntry;
+    isExpanded: boolean;
     onUpdateStatus: (id: string, status: JobEntry['status']) => void;
     onDelete: (id: string) => void;
 }
 
-const JobCard: React.FC<JobCardProps> = ({ job, onUpdateStatus, onDelete }) => {
-    const [isExpanded, setIsExpanded] = useState(false);
+const JobCard: React.FC<JobCardProps> = ({ job, isExpanded, onUpdateStatus, onDelete }) => {
     const { analysis } = job;
 
     const getStatusColor = (status: JobEntry['status']) => {
@@ -107,9 +121,10 @@ const JobCard: React.FC<JobCardProps> = ({ job, onUpdateStatus, onDelete }) => {
                 <div className="flex items-start justify-between">
                     <div>
                         <h3 className="font-bold text-lg">{job.title}</h3>
-                        <p className="text-sm text-muted-foreground">
+                        <p className="text-sm text-muted-foreground">【隱藏】
                             {job.company} {job.location && `• ${job.location}`}
                         </p>
+
                     </div>
                     <Badge className={getStatusColor(job.status)} variant="secondary">
                         {job.status}
@@ -121,10 +136,6 @@ const JobCard: React.FC<JobCardProps> = ({ job, onUpdateStatus, onDelete }) => {
             <div className="p-4 space-y-4">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
                     <div>
-                        <span className="font-semibold text-foreground block">核心價值</span>
-                        <p className="text-muted-foreground">{analysis?.coreValue || '無'}</p>
-                    </div>
-                    <div>
                         <span className="font-semibold text-foreground block">薪資潛力</span>
                         <p className="text-muted-foreground">{analysis?.salaryPotential || '無'}</p>
                     </div>
@@ -132,43 +143,38 @@ const JobCard: React.FC<JobCardProps> = ({ job, onUpdateStatus, onDelete }) => {
                         <span className="font-semibold text-foreground block">工作壓力</span>
                         <p className="text-muted-foreground">{analysis?.workPressure || '無'}</p>
                     </div>
-                    <div>
+                    <div>【隱藏】
+                        <span className="font-semibold text-foreground block">核心價值</span>
+                        <p className="text-muted-foreground">{analysis?.coreValue || '無'}</p>
+                    </div>
+                    <div>【隱藏】
                         <span className="font-semibold text-foreground block">主要技能</span>
                         <p className="text-muted-foreground">{analysis?.keySkills || '無'}</p>
                     </div>
                 </div>
 
                 <div className="pt-2 border-t">
-                    <div className="flex items-center justify-between mb-2">
+                    <div className="flex items-center justify-between mb-2">【隱藏】
                         <span className="font-bold text-sm">評分與概況</span>
-                        <Button
-                            variant="ghost"
-                            size="sm"
-                            className="h-8 px-2 text-xs"
-                            onClick={() => setIsExpanded(!isExpanded)}
-                        >
-                            {isExpanded ? '隱藏詳細說明' : '顯示詳細說明'}
-                            <AlertTriangle className={`ml-1 w-3 h-3 transition-transform ${isExpanded ? 'rotate-180' : ''}`} />
-                        </Button>
                     </div>
 
-                    <div className="grid grid-cols-3 gap-2 text-center text-sm">
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 text-center text-sm">
                         <div className="p-2 rounded bg-muted/30">
-                            {/* <div className="text-xs text-muted-foreground mb-1">契合度</div> */}
                             <div className={`font-bold ${getScoreColor(analysis?.matchScore || 0)}`}>
-                                <label className="mr-2">契合度 :</label>{analysis?.matchScore || 0}%
+                                <label className="mr-2 text-muted-foreground font-normal text-xs uppercase tracking-wider">契合度:</label>
+                                {analysis?.matchScore || 0}%
                             </div>
                         </div>
                         <div className="p-2 rounded bg-muted/30">
-                            {/* <div className="text-xs text-muted-foreground mb-1">風險</div> */}
-                            <div className={`font-bold capitalize ${getRiskColor(analysis?.riskAnalysis.level || '')}`}>
-                                <label className="mr-2">風險 :</label>{analysis?.riskAnalysis.level || '未知'}
+                            <div className={`font-bold capitalize ${getRiskColor(analysis?.riskAnalysis?.level || '')}`}>
+                                <label className="mr-2 text-muted-foreground font-normal text-xs uppercase tracking-wider">風險:</label>
+                                {analysis?.riskAnalysis?.level || '未知'}
                             </div>
                         </div>
                         <div className="p-2 rounded bg-muted/30">
-                            {/* <div className="text-xs text-muted-foreground mb-1">路程</div> */}
                             <div className="font-bold text-blue-600">
-                                <label className="mr-2">路程 :</label>{analysis?.commuteLabel || '未知'}
+                                <label className="mr-2 text-muted-foreground font-normal text-xs uppercase tracking-wider">路程:</label>
+                                {analysis?.commuteLabel || '未知'}
                             </div>
                         </div>
                     </div>
