@@ -2,13 +2,12 @@ import React, { useState } from 'react';
 import { useJobContext } from '../contexts/JobContext';
 import { Card } from '../components/ui/card';
 import { Button } from '../components/ui/button';
-import { Badge } from '../components/ui/badge';
-import { ExternalLink, Trash2, CheckCircle, XCircle, Clock, AlertTriangle, LayoutGrid, List as ListIcon } from 'lucide-react';
+import { ExternalLink, CheckCircle, XCircle, Clock, AlertTriangle, LayoutGrid, List as ListIcon } from 'lucide-react';
 import type { JobEntry } from '../types';
 
 export const Dashboard: React.FC = () => {
     const { savedJobs, deleteJob, updateJobStatus, loading } = useJobContext();
-    const [filter, setFilter] = useState<'all' | 'applied' | 'interviewing' | 'rejected' | 'offer'>('all');
+    const [filter, setFilter] = useState<'all' | 'saved' | 'applied' | 'offer' | 'rejected'>('all');
     const [showAllDetails, setShowAllDetails] = useState(false);
     const [viewMode, setViewMode] = useState<'list' | 'grid'>('list');
 
@@ -55,7 +54,7 @@ export const Dashboard: React.FC = () => {
                     </div>
 
                     <div className="flex gap-1 bg-slate-100 p-1 rounded-lg">
-                        {(['all', 'applied', 'interviewing', 'offer', 'rejected'] as const).map((s) => (
+                        {(['all', 'saved', 'applied', 'offer', 'rejected'] as const).map((s) => (
                             <Button
                                 key={s}
                                 variant={filter === s ? 'default' : 'ghost'}
@@ -63,7 +62,7 @@ export const Dashboard: React.FC = () => {
                                 onClick={() => setFilter(s)}
                                 className="capitalize h-8 px-3 text-xs"
                             >
-                                {s}
+                                {s === 'saved' ? '待處理' : s === 'applied' ? '投遞' : s === 'offer' ? '錄取' : s === 'rejected' ? '拒絕' : '全部'}
                             </Button>
                         ))}
                     </div>
@@ -114,13 +113,13 @@ interface JobCardProps {
 const JobCard: React.FC<JobCardProps> = ({ job, isExpanded, onUpdateStatus, onDelete }) => {
     const { analysis } = job;
 
-    const getStatusColor = (status: JobEntry['status']) => {
+    const getStatusInfo = (status: JobEntry['status']) => {
         switch (status) {
-            case 'applied': return 'bg-blue-100 text-blue-800';
-            case 'interviewing': return 'bg-purple-100 text-purple-800';
-            case 'offer': return 'bg-green-100 text-green-800';
-            case 'rejected': return 'bg-red-100 text-red-800';
-            default: return 'bg-slate-100 text-slate-800';
+            case 'saved': return { label: '待處理', color: 'bg-slate-100 text-slate-800 border-slate-200' };
+            case 'applied': return { label: '投遞', color: 'bg-blue-100 text-blue-800 border-blue-200' };
+            case 'offer': return { label: '錄取', color: 'bg-emerald-100 text-emerald-800 border-emerald-200' };
+            case 'rejected': return { label: '拒絕', color: 'bg-rose-100 text-rose-800 border-rose-200' };
+            default: return { label: status, color: 'bg-slate-100 text-slate-800 border-slate-200' };
         }
     };
 
@@ -165,15 +164,29 @@ const JobCard: React.FC<JobCardProps> = ({ job, isExpanded, onUpdateStatus, onDe
                 <div className="flex items-start justify-between">
                     <div>
                         <h3 className="font-bold text-lg">{job.title}</h3>
-                        {isExpanded && (
-                            <p className="text-sm text-muted-foreground">
-                                {job.company} {job.location && `${job.location}`}
-                            </p>
-                        )}
+                        <p className="text-sm text-muted-foreground">
+                            {job.company} {isExpanded && job.location && `· ${job.location}`}
+                        </p>
                     </div>
-                    <Badge className={getStatusColor(job.status)} variant="secondary">
-                        {job.status}
-                    </Badge>
+                    <select
+                        className={`h-8 rounded-md border px-2 py-1 text-xs font-semibold shadow-sm focus:ring-1 focus:ring-ring transition-colors ${getStatusInfo(job.status).color}`}
+                        value={job.status}
+                        onChange={(e) => {
+                            const newStatus = e.target.value as any;
+                            if (newStatus === 'deleted') {
+                                if (confirm('確定要刪除此職缺？')) onDelete(job.id);
+                            } else {
+                                onUpdateStatus(job.id, newStatus);
+                            }
+                        }}
+                    >
+                        <option value="saved">待處理</option>
+                        <option value="applied">投遞</option>
+                        <option value="offer">錄取</option>
+                        <option value="rejected">拒絕</option>
+                        <option disabled>──────────</option>
+                        <option value="deleted" className="text-destructive font-bold">🗑️ 刪除職缺</option>
+                    </select>
                 </div>
             </div>
 
@@ -276,45 +289,20 @@ const JobCard: React.FC<JobCardProps> = ({ job, isExpanded, onUpdateStatus, onDe
                 )}
             </div>
 
-            {/* Actions 區塊 */}
             <div className="p-4 bg-muted/20 border-t flex flex-wrap items-center justify-between gap-3">
                 <div className="flex items-center gap-2">
-                    <select
-                        className="h-8 w-[120px] rounded-md border border-input bg-background px-2 py-1 text-xs shadow-sm focus:ring-1 focus:ring-ring"
-                        value={job.status}
-                        onChange={(e) => onUpdateStatus(job.id, e.target.value as any)}
-                    >
-                        <option value="saved">Saved</option>
-                        <option value="applied">Applied</option>
-                        <option value="interviewing">Interviewing</option>
-                        <option value="offer">Offer</option>
-                        <option value="rejected">Rejected</option>
-                        <option value="ghosted">Ghosted</option>
-                    </select>
-
                     <a href={job.url} target="_blank" rel="noopener noreferrer">
-                        <Button size="sm" variant="outline" className="h-8 gap-1 text-xs">
+                        <Button size="sm" variant="outline" className="h-8 gap-1 text-xs bg-white">
                             <ExternalLink className="w-3 h-3" />
-                            連結
+                            查看職缺
                         </Button>
                     </a>
                 </div>
 
                 <div className="flex items-center gap-2">
-                    <div className="text-[10px] text-muted-foreground">
+                    <div className="text-[10px] text-muted-foreground font-medium">
                         Added: {new Date(job.createdAt).toLocaleDateString()}
                     </div>
-                    <Button
-                        size="icon"
-                        variant="ghost"
-                        className="h-8 w-8 text-destructive hover:bg-destructive/10"
-                        onClick={() => {
-                            if (confirm('確定要刪除此職缺？')) onDelete(job.id);
-                        }}
-                        title="Delete Job"
-                    >
-                        <Trash2 className="w-4 h-4" />
-                    </Button>
                 </div>
             </div>
         </Card>

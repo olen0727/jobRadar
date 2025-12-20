@@ -1,4 +1,4 @@
-export type JobStatus = 'saved' | 'applied' | 'interviewing' | 'offer' | 'rejected' | 'ghosted';
+export type JobStatus = 'saved' | 'applied' | 'offer' | 'rejected' | 'deleted' | 'interviewing' | 'ghosted';
 
 export interface UserProfile {
     name: string;
