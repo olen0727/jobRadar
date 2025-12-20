@@ -10,10 +10,15 @@ export class OpenAIError extends Error {
     }
 }
 
-const SYSTEM_PROMPT = `
-Role: You are an expert Career Strategist and Technical Recruiter. You act as a "Black Box" analyzer for a senior candidate.
-
+export const SYSTEM_PROMPT = `
+Role: You are an expert Career Strategist and Technical Recruiter. You act as a "Black Box" analyzer for the user.
 Task: Analyze this job opportunity based on the User Profile.
+
+IMPORTANT:
+- Address the user directly as "你" (you).
+- DO NOT use terms like "Candidate", "候選人", "該求職者" or "這名工程師".
+- Speak as if you are giving advice directly to the person in front of you.
+
 Output Format: JSON only. Do not output markdown.
 
 JSON Structure:
@@ -28,7 +33,7 @@ JSON Structure:
     "flags": ["List specific red flags like 'Gambling terms', 'Unclear business model', 'High concurrency without product']"
   },
   "strategicAdvice": "Direct advice. E.g., 'Apply immediately', 'Skip - high risk', 'Good for backup'.",
-  "coreValue": "Value to the candidate (e.g. 'Skill Growth', 'High Pay', 'Stability')",
+  "coreValue": "Value to the user (e.g. 'Skill Growth', 'High Pay', 'Stability')",
   "salaryPotential": "Estimated annual salary (e.g. '1.5M - 1.8M TWD')",
   "workPressure": "Work pressure estimate (e.g. 'High - Oncall required', 'Low - 9 to 5')",
   "keySkills": "Top 3 critical skills required (e.g. 'React, Golang, AWS')",
@@ -86,21 +91,30 @@ ${job.description.substring(0, 25000)}
     // Limit char count to avoid token limits
 
     try {
+        const model = profile.openaiModel || 'gpt-4o';
+        const isReasoningModel = model.startsWith('gpt-5');
+
+        const body: any = {
+            model: model,
+            messages: [
+                { role: 'system', content: SYSTEM_PROMPT },
+                { role: 'user', content: userContent }
+            ],
+            response_format: { type: "json_object" }
+        };
+
+        // Reasoning models (o1/gpt-5) don't support custom temperature
+        if (!isReasoningModel) {
+            body.temperature = 0.7;
+        }
+
         const response = await fetch('https://api.openai.com/v1/chat/completions', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
                 'Authorization': `Bearer ${profile.apiKey}`
             },
-            body: JSON.stringify({
-                model: 'gpt-4o', // Default to 4o for best reasoning, fallback handled if user has no access? assume 4o/turbo.
-                messages: [
-                    { role: 'system', content: SYSTEM_PROMPT },
-                    { role: 'user', content: userContent }
-                ],
-                temperature: 0.7,
-                response_format: { type: "json_object" }
-            })
+            body: JSON.stringify(body)
         });
 
         if (!response.ok) {
@@ -116,13 +130,13 @@ ${job.description.substring(0, 25000)}
 
         // Log Usage
         if (result.usage) {
-            const cost = calculateCost('openai', 'gpt-4o', result.usage.prompt_tokens, result.usage.completion_tokens);
+            const cost = calculateCost('openai', model, result.usage.prompt_tokens, result.usage.completion_tokens);
 
             await storage.saveUsageLog({
                 id: crypto.randomUUID(),
                 timestamp: new Date().toISOString(),
                 provider: 'openai',
-                model: 'gpt-4o',
+                model: model,
                 operation: 'job_analysis',
                 inputTokens: result.usage.prompt_tokens,
                 outputTokens: result.usage.completion_tokens,
@@ -144,7 +158,7 @@ ${job.description.substring(0, 25000)}
     }
 }
 
-const RESUME_SYSTEM_PROMPT = `
+export const RESUME_SYSTEM_PROMPT = `
 Role: You are an expert Resume Parser.
 Task: Extract structured data from the provided resume text.
 Output Format: JSON only.
@@ -166,9 +180,11 @@ JSON Structure:
 
 export const parseResumeWithAI = async (
     resumeText: string,
-    apiKey: string
+    profile: UserProfile
 ): Promise<UserProfile> => {
+    const apiKey = profile.apiKey;
     if (!apiKey) throw new OpenAIError('API Key is missing.');
+    const model = profile.openaiModel || 'gpt-4o';
 
     try {
         const response = await fetch('https://api.openai.com/v1/chat/completions', {
@@ -178,7 +194,7 @@ export const parseResumeWithAI = async (
                 'Authorization': `Bearer ${apiKey}`
             },
             body: JSON.stringify({
-                model: 'gpt-4o',
+                model: model,
                 messages: [
                     { role: 'system', content: RESUME_SYSTEM_PROMPT },
                     { role: 'user', content: `RESUME TEXT:\n${resumeText.substring(0, 25000)}` }
@@ -202,13 +218,13 @@ export const parseResumeWithAI = async (
 
         // Log Usage
         if (result.usage) {
-            const cost = calculateCost('openai', 'gpt-4o', result.usage.prompt_tokens, result.usage.completion_tokens);
+            const cost = calculateCost('openai', model, result.usage.prompt_tokens, result.usage.completion_tokens);
 
             await storage.saveUsageLog({
                 id: crypto.randomUUID(),
                 timestamp: new Date().toISOString(),
                 provider: 'openai',
-                model: 'gpt-4o',
+                model: model,
                 operation: 'resume_parsing',
                 inputTokens: result.usage.prompt_tokens,
                 outputTokens: result.usage.completion_tokens,

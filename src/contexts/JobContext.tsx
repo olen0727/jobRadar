@@ -10,6 +10,7 @@ interface JobContextType {
     addJob: (job: JobEntry) => Promise<void>;
     updateJobStatus: (id: string, status: JobEntry['status']) => Promise<void>;
     deleteJob: (id: string) => Promise<void>;
+    reorderJobs: (newJobs: JobEntry[]) => Promise<void>;
     refreshJobs: () => Promise<void>;
 }
 
@@ -28,6 +29,9 @@ export const JobProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         try {
             const profile = await storage.getUserProfile();
             const jobs = await storage.getSavedJobs();
+            // Generate/Get anonymous ID on startup
+            await storage.getAnonymousId();
+
             setUserProfile(profile);
             setSavedJobs(jobs);
         } catch (error) {
@@ -44,7 +48,7 @@ export const JobProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     };
 
     const addJob = async (job: JobEntry) => {
-        const newJobs = [...savedJobs, job];
+        const newJobs = [job, ...savedJobs];
         await storage.set({ saved_jobs: newJobs });
         setSavedJobs(newJobs);
     };
@@ -63,6 +67,11 @@ export const JobProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         setSavedJobs(newJobs);
     };
 
+    const reorderJobs = async (newJobs: JobEntry[]) => {
+        await storage.set({ saved_jobs: newJobs });
+        setSavedJobs(newJobs);
+    };
+
     return (
         <JobContext.Provider value={{
             userProfile,
@@ -72,6 +81,7 @@ export const JobProvider: React.FC<{ children: React.ReactNode }> = ({ children 
             addJob,
             updateJobStatus,
             deleteJob,
+            reorderJobs,
             refreshJobs: loadData
         }}>
             {children}

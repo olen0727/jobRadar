@@ -12,7 +12,7 @@ import { AlertCircle, Briefcase, CheckCircle, ExternalLink, ShieldAlert, Sparkle
 import { cn } from './lib/utils';
 import { v4 as uuidv4 } from 'uuid';
 
-type ViewMode = 'menu' | 'job' | 'resume' | 'detecting' | 'unknown';
+type ViewMode = 'menu' | 'job' | 'resume' | 'detecting' | 'unknown' | 'trial_exceeded';
 
 const PopupContent = () => {
   const { userProfile, saveProfile, loading: contextLoading, addJob } = useJobContext();
@@ -47,11 +47,7 @@ const PopupContent = () => {
     setLoading(true);
     setError(null);
     try {
-      if (userProfile?.apiProvider === 'gemini') {
-        if (!userProfile.geminiApiKey) throw new Error('Please set Gemini API Key in Options first.');
-      } else {
-        if (!userProfile?.apiKey) throw new Error('Please set OpenAI API Key in Options first.');
-      }
+      if (!userProfile) throw new Error('User profile not contextually loaded.');
 
       const result = await getActiveTabContent();
       if (!result || !result.description || result.description.length < 50) {
@@ -62,7 +58,11 @@ const PopupContent = () => {
       const aiResult = await analyzeJob(result, userProfile);
       setAnalysis(aiResult);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Analysis failed');
+      if (err instanceof Error && err.name === 'QuotaExceededError') {
+        setMode('trial_exceeded');
+      } else {
+        setError(err instanceof Error ? err.message : 'Analysis failed');
+      }
     } finally {
       setLoading(false);
     }
@@ -76,11 +76,7 @@ const PopupContent = () => {
     setProfileSaved(false);
 
     try {
-      if (userProfile?.apiProvider === 'gemini') {
-        if (!userProfile.geminiApiKey) throw new Error('Please set Gemini API Key in Options first.');
-      } else {
-        if (!userProfile?.apiKey) throw new Error('Please set OpenAI API Key in Options first.');
-      }
+      if (!userProfile) throw new Error('User profile not contextually loaded.');
 
       const result = await getActiveTabContent();
       if (!result || !result.description || result.description.length < 50) {
@@ -90,7 +86,11 @@ const PopupContent = () => {
       const newProfile = await parseResume(result.description, userProfile);
       setParsedProfile(newProfile);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Parsing failed');
+      if (err instanceof Error && err.name === 'QuotaExceededError') {
+        setMode('trial_exceeded');
+      } else {
+        setError(err instanceof Error ? err.message : 'Parsing failed');
+      }
     } finally {
       setLoading(false);
     }
@@ -219,6 +219,32 @@ const PopupContent = () => {
             職缺分析 (Job Analyze)
           </Button>
         </main>
+      </div>
+    );
+  }
+
+  // VIEW: TRIAL EXCEEDED
+  if (mode === 'trial_exceeded') {
+    return (
+      <div className="w-[400px] h-[500px] bg-background flex flex-col p-6 items-center justify-center text-center gap-6">
+        <ShieldAlert className="w-16 h-16 text-destructive" />
+        <div className="space-y-2">
+          <h2 className="text-xl font-bold text-destructive">試用額度已用完</h2>
+          <p className="text-sm text-muted-foreground px-4">
+            您的試用額度已用完，請填寫您的 API Key 以繼續使用。
+            <br /><br />
+            本服務所有資訊皆儲存於您的本地端，不必擔心資料外洩。
+          </p>
+        </div>
+        <Button
+          className="w-full h-12"
+          onClick={() => {
+            chrome.tabs.create({ url: chrome.runtime.getURL('options.html#settings?quota=exceeded') });
+          }}
+        >
+          前往設定頁面
+        </Button>
+        <Button variant="ghost" className="text-xs text-muted-foreground" onClick={() => setMode('menu')}>返回</Button>
       </div>
     );
   }

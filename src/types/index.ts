@@ -13,8 +13,19 @@ export interface UserProfile {
     apiKey: string; // OpenAI Key
     geminiApiKey?: string; // Gemini Key
     geminiModel?: GeminiModel; // Selected Gemini Model
+    openaiModel?: OpenAIModel; // Selected OpenAI Model
     apiProvider: 'openai' | 'gemini'; // Future proofing
+    anonymousId?: string; // For trial tracking
 }
+
+export type OpenAIModel =
+    | 'gpt-5.2'
+    | 'gpt-5.1'
+    | 'gpt-5'
+    | 'gpt-5-mini'
+    | 'gpt-4.1'
+    | 'gpt-4.1-mini'
+    | 'gpt-4o';
 
 export type GeminiModel =
     | 'gemini-3-pro-preview'

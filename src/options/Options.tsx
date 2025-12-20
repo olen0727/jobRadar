@@ -30,20 +30,34 @@ const OptionsContent: React.FC = () => {
 
         window.addEventListener('hashchange', syncViewWithHash);
 
-        // Modal reminder logic
+        // Modal reminders logic
         const hash = window.location.hash;
-        if (hash.includes('remind=location') && !hasShownToast.current) {
-            hasShownToast.current = true;
-            setTimeout(() => {
-                showConfirm(
-                    '完善個人資訊',
-                    '請填寫您的完整地址，讓路程計算更準確哦！',
-                    '立即填寫',
-                    () => {
-                        window.dispatchEvent(new CustomEvent('focus-home-location'));
-                    }
-                );
-            }, 800);
+        if (!hasShownToast.current) {
+            if (hash.includes('remind=location')) {
+                hasShownToast.current = true;
+                setTimeout(() => {
+                    showConfirm(
+                        '完善個人資訊',
+                        '請填寫您的完整地址，讓路程計算更準確哦！',
+                        '立即填寫',
+                        () => {
+                            window.dispatchEvent(new CustomEvent('focus-home-location'));
+                        }
+                    );
+                }, 800);
+            } else if (hash.includes('quota=exceeded')) {
+                hasShownToast.current = true;
+                setTimeout(() => {
+                    showConfirm(
+                        '試用額度已用完',
+                        '您的試用額度已用完，請填寫您的 API Key 以繼續使用，本服務所有資訊皆儲存於您的本地端，不必擔心資料外洩。',
+                        '立即填寫',
+                        () => {
+                            window.dispatchEvent(new CustomEvent('focus-api-key'));
+                        }
+                    );
+                }, 800);
+            }
         }
 
         return () => window.removeEventListener('hashchange', syncViewWithHash);

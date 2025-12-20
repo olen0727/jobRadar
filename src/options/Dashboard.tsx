@@ -2,17 +2,48 @@ import React, { useState } from 'react';
 import { useJobContext } from '../contexts/JobContext';
 import { Card } from '../components/ui/card';
 import { Button } from '../components/ui/button';
-import { ExternalLink, CheckCircle, XCircle, Clock, LayoutGrid, List as ListIcon } from 'lucide-react';
+import {
+    ExternalLink,
+    CheckCircle,
+    XCircle,
+    Clock,
+    LayoutGrid,
+    List as ListIcon,
+    GripVertical
+} from 'lucide-react';
+import {
+    DndContext,
+    closestCenter,
+    PointerSensor,
+    useSensor,
+    useSensors,
+} from '@dnd-kit/core';
+import type { DragEndEvent } from '@dnd-kit/core';
+import {
+    arrayMove,
+    SortableContext,
+    rectSortingStrategy,
+    useSortable,
+} from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
 import type { JobEntry } from '../types';
 
 export const Dashboard: React.FC = () => {
-    const { savedJobs, deleteJob, updateJobStatus, loading } = useJobContext();
+    const { savedJobs, deleteJob, updateJobStatus, reorderJobs, loading } = useJobContext();
     const [filter, setFilter] = useState<'all' | 'saved' | 'applied' | 'offer' | 'rejected'>('all');
     // Load preference from localStorage, default to true (Detailed/List)
     const [showAllDetails, setShowAllDetails] = useState(() => {
         const saved = localStorage.getItem('dashboard_showAllDetails');
         return saved !== null ? JSON.parse(saved) : true;
     });
+
+    const sensors = useSensors(
+        useSensor(PointerSensor, {
+            activationConstraint: {
+                distance: 8,
+            },
+        })
+    );
 
     // Save preference to localStorage when changed
     React.useEffect(() => {
@@ -23,12 +54,21 @@ export const Dashboard: React.FC = () => {
         return <div className="p-8 text-center">Loading jobs...</div>;
     }
 
-    // 1. 排序：最新增加的在最前面
-    const sortedJobs = [...savedJobs].sort((a, b) =>
-        new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-    );
+    const filteredJobs = savedJobs.filter(job => filter === 'all' || job.status === filter);
 
-    const filteredJobs = sortedJobs.filter(job => filter === 'all' || job.status === filter);
+    const handleDragEnd = (event: DragEndEvent) => {
+        const { active, over } = event;
+
+        if (over && active.id !== over.id) {
+            const oldIndex = savedJobs.findIndex((j) => j.id === active.id);
+            const newIndex = savedJobs.findIndex((j) => j.id === over.id);
+
+            if (oldIndex !== -1 && newIndex !== -1) {
+                const newOrder = arrayMove(savedJobs, oldIndex, newIndex);
+                reorderJobs(newOrder);
+            }
+        }
+    };
 
     return (
         <div className="space-y-6">
@@ -87,19 +127,54 @@ export const Dashboard: React.FC = () => {
                         {filter === 'all' ? 'No saved jobs found. Start by pinning some jobs!' : `No jobs found with status "${filter}".`}
                     </div>
                 ) : (
-                    <div className={`grid gap-6 ${!showAllDetails ? 'grid-cols-1 md:grid-cols-2' : 'grid-cols-1'}`}>
-                        {filteredJobs.map((job) => (
-                            <JobCard
-                                key={job.id}
-                                job={job}
-                                isExpanded={showAllDetails}
-                                onUpdateStatus={updateJobStatus}
-                                onDelete={deleteJob}
-                            />
-                        ))}
-                    </div>
+                    <DndContext
+                        sensors={sensors}
+                        collisionDetection={closestCenter}
+                        onDragEnd={handleDragEnd}
+                    >
+                        <SortableContext
+                            items={filteredJobs.map(j => j.id)}
+                            strategy={rectSortingStrategy}
+                        >
+                            <div className={`grid gap-6 ${!showAllDetails ? 'grid-cols-1 md:grid-cols-2' : 'grid-cols-1'}`}>
+                                {filteredJobs.map((job) => (
+                                    <SortableJobCard
+                                        key={job.id}
+                                        job={job}
+                                        isExpanded={showAllDetails}
+                                        onUpdateStatus={updateJobStatus}
+                                        onDelete={deleteJob}
+                                    />
+                                ))}
+                            </div>
+                        </SortableContext>
+                    </DndContext>
                 )}
             </div>
+        </div>
+    );
+};
+
+const SortableJobCard: React.FC<JobCardProps> = (props) => {
+    const {
+        attributes,
+        listeners,
+        setNodeRef,
+        transform,
+        transition,
+        isDragging
+    } = useSortable({ id: props.job.id });
+
+    const style = {
+        transform: CSS.Transform.toString(transform),
+        transition,
+        zIndex: isDragging ? 50 : undefined,
+        opacity: isDragging ? 0.5 : 1,
+    };
+
+    return (
+        <div ref={setNodeRef} style={style}>
+            <JobCard {...props} dragHandleProps={{ ...attributes, ...listeners }} />
         </div>
     );
 };
@@ -109,9 +184,10 @@ interface JobCardProps {
     isExpanded: boolean;
     onUpdateStatus: (id: string, status: JobEntry['status']) => void;
     onDelete: (id: string) => void;
+    dragHandleProps?: any;
 }
 
-const JobCard: React.FC<JobCardProps> = ({ job, isExpanded, onUpdateStatus, onDelete }) => {
+const JobCard: React.FC<JobCardProps> = ({ job, isExpanded, onUpdateStatus, onDelete, dragHandleProps }) => {
     const { analysis } = job;
 
     const getStatusInfo = (status: JobEntry['status']) => {
@@ -159,43 +235,52 @@ const JobCard: React.FC<JobCardProps> = ({ job, isExpanded, onUpdateStatus, onDe
     };
 
     return (
-        <Card className="overflow-hidden bg-white border-slate-200 shadow-md transition-all hover:shadow-lg hover:border-slate-300">
+        <Card className="overflow-hidden bg-white border-slate-200 shadow-md transition-all hover:shadow-lg hover:border-slate-300 relative group">
             {/* 上方區塊 */}
-            <div className="p-2 border-b border-slate-100 bg-slate-50/50">
-                <div className="flex items-start justify-between">
-                    <div className="group">
-                        <a
-                            href={job.url}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="inline-flex items-center gap-1.5 hover:text-primary transition-colors"
+            <div className="p-2 border-b border-slate-100 bg-slate-50/50 flex items-center gap-2">
+                <div
+                    {...dragHandleProps}
+                    className="cursor-grab active:cursor-grabbing p-1 text-slate-300 hover:text-slate-500 transition-colors"
+                >
+                    <GripVertical className="w-4 h-4" />
+                </div>
+
+                <div className="flex-1 min-w-0">
+                    <div className="flex items-start justify-between">
+                        <div className="group/title truncate pr-2">
+                            <a
+                                href={job.url}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="inline-flex items-center gap-1.5 hover:text-primary transition-colors max-w-full"
+                            >
+                                <h3 className="font-bold text-lg leading-snug hover:underline truncate">{job.title}</h3>
+                                {/* <ExternalLink className="w-4 h-4 flex-shrink-0 text-slate-400 group-hover/title:text-primary transition-colors" /> */}
+                            </a>
+                            <p className="text-sm text-muted-foreground truncate">
+                                {job.company} {isExpanded && job.location && ` · ${job.location}`}
+                            </p>
+                        </div>
+                        <select
+                            className={`h-8 rounded-md border px-2 py-1 text-xs font-semibold shadow-sm focus:ring-1 focus:ring-ring transition-colors ${getStatusInfo(job.status).color}`}
+                            value={job.status}
+                            onChange={(e) => {
+                                const newStatus = e.target.value as any;
+                                if (newStatus === 'deleted') {
+                                    if (confirm('確定要刪除此職缺？')) onDelete(job.id);
+                                } else {
+                                    onUpdateStatus(job.id, newStatus);
+                                }
+                            }}
                         >
-                            <h3 className="font-bold text-lg leading-snug hover:underline">{job.title}</h3>
-                            <ExternalLink className="w-4 h-4 text-slate-400 group-hover:text-primary transition-colors" />
-                        </a>
-                        <p className="text-sm text-muted-foreground">
-                            {job.company} {isExpanded && job.location && ` · ${job.location}`}
-                        </p>
+                            <option value="saved">待處理</option>
+                            <option value="applied">投遞</option>
+                            <option value="offer">錄取</option>
+                            <option value="rejected">拒絕</option>
+                            <option disabled>──────────</option>
+                            <option value="deleted" className="text-destructive font-bold">🗑️ 刪除職缺</option>
+                        </select>
                     </div>
-                    <select
-                        className={`h-8 rounded-md border px-2 py-1 text-xs font-semibold shadow-sm focus:ring-1 focus:ring-ring transition-colors ${getStatusInfo(job.status).color}`}
-                        value={job.status}
-                        onChange={(e) => {
-                            const newStatus = e.target.value as any;
-                            if (newStatus === 'deleted') {
-                                if (confirm('確定要刪除此職缺？')) onDelete(job.id);
-                            } else {
-                                onUpdateStatus(job.id, newStatus);
-                            }
-                        }}
-                    >
-                        <option value="saved">待處理</option>
-                        <option value="applied">投遞</option>
-                        <option value="offer">錄取</option>
-                        <option value="rejected">拒絕</option>
-                        <option disabled>──────────</option>
-                        <option value="deleted" className="text-destructive font-bold">🗑️ 刪除職缺</option>
-                    </select>
                 </div>
             </div>
 
@@ -297,13 +382,6 @@ const JobCard: React.FC<JobCardProps> = ({ job, isExpanded, onUpdateStatus, onDe
                     </div>
                 )}
             </div>
-
-            {/* 底部時間標記 */}
-            {/* <div className="px-4 pb-3 flex justify-end">
-                <div className="text-[10px] text-muted-foreground font-medium italic">
-                    Added: {new Date(job.createdAt).toLocaleDateString()}
-                </div>
-            </div> */}
         </Card>
     );
 };

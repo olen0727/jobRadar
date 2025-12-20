@@ -31,8 +31,9 @@ export const Settings: React.FC = () => {
             setFormData(userProfile);
             setSkillsInput(userProfile.skills.join(', '));
         }
+    }, [userProfile]);
 
-        // Address location reminder focus handler
+    useEffect(() => {
         const handleFocusRequest = () => {
             const addressInput = document.getElementById('homeLocation');
             if (addressInput) {
@@ -40,10 +41,23 @@ export const Settings: React.FC = () => {
                 addressInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
             }
         };
-
         window.addEventListener('focus-home-location', handleFocusRequest);
-        return () => window.removeEventListener('focus-home-location', handleFocusRequest);
-    }, [userProfile]);
+
+        const handleFocusApiKey = () => {
+            const id = formData.apiProvider === 'openai' ? 'apiKey' : 'geminiApiKey';
+            const input = document.getElementById(id);
+            if (input) {
+                input.focus();
+                input.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
+        };
+        window.addEventListener('focus-api-key', handleFocusApiKey);
+
+        return () => {
+            window.removeEventListener('focus-home-location', handleFocusRequest);
+            window.removeEventListener('focus-api-key', handleFocusApiKey);
+        };
+    }, [formData.apiProvider]);
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
         const { name, value } = e.target;
@@ -84,7 +98,7 @@ export const Settings: React.FC = () => {
                 </CardDescription>
             </CardHeader>
             <CardContent>
-                <form onSubmit={handleSubmit} className="space-y-6">
+                <form onSubmit={handleSubmit} className="space-y-6" noValidate>
                     <div className="grid grid-cols-2 gap-4">
                         <div className="space-y-2">
                             <Label htmlFor="name">Full Name</Label>
@@ -165,15 +179,21 @@ export const Settings: React.FC = () => {
                                 <Button
                                     type="button"
                                     variant={formData.apiProvider === 'openai' ? 'default' : 'outline'}
-                                    onClick={() => setFormData(p => ({ ...p, apiProvider: 'openai' }))}
+                                    onClick={(e) => {
+                                        e.preventDefault();
+                                        setFormData(prev => ({ ...prev, apiProvider: 'openai' }));
+                                    }}
                                     className="w-1/2"
                                 >
-                                    OpenAI (GPT-4)
+                                    OpenAI
                                 </Button>
                                 <Button
                                     type="button"
                                     variant={formData.apiProvider === 'gemini' ? 'default' : 'outline'}
-                                    onClick={() => setFormData(p => ({ ...p, apiProvider: 'gemini' }))}
+                                    onClick={(e) => {
+                                        e.preventDefault();
+                                        setFormData(prev => ({ ...prev, apiProvider: 'gemini' }));
+                                    }}
                                     className="w-1/2"
                                 >
                                     Google Gemini
@@ -182,18 +202,39 @@ export const Settings: React.FC = () => {
                         </div>
 
                         {formData.apiProvider === 'openai' ? (
-                            <div className="space-y-2">
-                                <Label htmlFor="apiKey" className="text-destructive font-bold">OpenAI API Key</Label>
-                                <Input
-                                    id="apiKey"
-                                    name="apiKey"
-                                    type="password"
-                                    value={formData.apiKey}
-                                    onChange={handleChange}
-                                    placeholder="sk-..."
-                                    required={formData.apiProvider === 'openai'}
-                                />
-                                <p className="text-xs text-muted-foreground">Stored locally. Used for GPT-4o.</p>
+                            <div className="space-y-4">
+                                <div className="space-y-2">
+                                    <Label htmlFor="apiKey" className="text-destructive font-bold">OpenAI API Key</Label>
+                                    <Input
+                                        id="apiKey"
+                                        name="apiKey"
+                                        type="password"
+                                        value={formData.apiKey}
+                                        onChange={handleChange}
+                                        placeholder="sk-..."
+                                        required={formData.apiProvider === 'openai'}
+                                    />
+                                    <p className="text-xs text-muted-foreground">Stored locally. Used for analysis.</p>
+                                </div>
+                                <div className="space-y-2">
+                                    <Label htmlFor="openaiModel">OpenAI Model</Label>
+                                    <select
+                                        id="openaiModel"
+                                        name="openaiModel"
+                                        className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                                        value={formData.openaiModel || 'gpt-4o'}
+                                        onChange={(e) => setFormData(prev => ({ ...prev, openaiModel: e.target.value as any }))}
+                                    >
+                                        <option value="gpt-5.2">GPT-5.2 (Ultra)</option>
+                                        <option value="gpt-5.1">GPT-5.1 (High)</option>
+                                        <option value="gpt-5">GPT-5 (Standard)</option>
+                                        <option value="gpt-5-mini">GPT-5-mini (Flash)</option>
+                                        <option value="gpt-4.1">GPT-4.1 (Pro)</option>
+                                        <option value="gpt-4.1-mini">GPT-4.1-mini (Flash)</option>
+                                        <option value="gpt-4o">GPT-4o (Classic)</option>
+                                    </select>
+                                    <p className="text-xs text-muted-foreground">Select the OpenAI model variant to use.</p>
+                                </div>
                             </div>
                         ) : (
                             <div className="space-y-4">
@@ -236,6 +277,6 @@ export const Settings: React.FC = () => {
                     {message && <p className="text-center text-sm font-medium text-green-600 animate-pulse">{message}</p>}
                 </form>
             </CardContent>
-        </Card>
+        </Card >
     );
 };
