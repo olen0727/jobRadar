@@ -149,6 +149,20 @@ const PopupContent = () => {
           <Button variant="ghost" size="icon" onClick={openDashboard}><ExternalLink className="w-4 h-4" />setting</Button>
         </header>
         <main className="flex-1 p-6 flex flex-col gap-4 justify-center">
+          <Button
+            className="h-12 text-sm flex gap-2 border-dashed"
+            variant="outline"
+            onClick={async () => {
+              try {
+                const result = await getActiveTabContent();
+                alert(`頁面判定結果: ${result.pageType}`);
+              } catch (e) {
+                alert('判定失敗: ' + e);
+              }
+            }}
+          >
+            🔍 測試頁面判定 (Debug)
+          </Button>
           <Button className="h-24 text-lg flex flex-col gap-2" variant="outline" onClick={startResumeParsing}>
             <FileText className="w-8 h-8" />
             履歷解析 (Resume Parse)

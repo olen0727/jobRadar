@@ -6,6 +6,7 @@ export interface ScrapedJobData {
     platform: '104' | 'yourator' | 'linkedin' | 'other';
     location?: string;
     salary?: string;
+    pageType?: 'job' | 'resume' | 'unknown';
 }
 
 // This function is intended to be serialized and injected into the page
@@ -36,9 +37,37 @@ export const scrapePageScript = (): ScrapedJobData => {
     };
 
     try {
+        // Page Type Classification Logic
+        const bodyText = document.body.innerText;
+
+        // URL patterns (Maintainable arrays)
+        const jobUrlPatterns = ['job', 'view', 'postings'];
+        const resumeUrlPatterns = ['resume', 'profile', 'cv', 'edit-profile'];
+
+        const isJobUrl = jobUrlPatterns.some(p => url.toLowerCase().includes(p));
+        const isResumeUrl = resumeUrlPatterns.some(p => url.toLowerCase().includes(p));
+
+        // Keyword Density patterns
+        const jobKeywords = ['工作內容', '任職要求', '徵才福利', '應徵方式', 'Job Description', '我們'];
+        const resumeKeywords = ['工作經歷', '教育背景', '個人專長', '自傳', '自我介紹', 'Education', 'Experience', '我是', '我的'];
+
+        const jobScore = jobKeywords.filter(k => bodyText.includes(k)).length;
+        const resumeScore = resumeKeywords.filter(k => bodyText.includes(k)).length;
+
+        let detectedType: 'job' | 'resume' | 'unknown' = 'unknown';
+
+        // 1. URL Match Priority
+        if (isJobUrl && !isResumeUrl) detectedType = 'job';
+        else if (isResumeUrl && !isJobUrl) detectedType = 'resume';
+        // 2. Keyword Match Fallback
+        else if (jobScore > resumeScore && jobScore > 0) detectedType = 'job';
+        else if (resumeScore > jobScore && resumeScore > 0) detectedType = 'resume';
+
+        data.pageType = detectedType;
+
         switch (platform) {
             case '104':
-                // 104 Job Bank
+                // ... (Existing platform logic remains the same)
                 data.title = getText('h1') || getMetaContent('og:title');
                 data.company = getText('a[href*="/company/"] h2') || getText('.job-header__title a'); // Defensive
                 data.description = getText('.job-description__content') || getText('p.r3');
