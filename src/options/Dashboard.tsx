@@ -3,20 +3,25 @@ import { useJobContext } from '../contexts/JobContext';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../components/ui/card';
 import { Button } from '../components/ui/button';
 import { Badge } from '../components/ui/badge';
-import { ExternalLink, Trash2, CheckCircle, XCircle, Clock, AlertTriangle } from 'lucide-react';
+import { ExternalLink, Trash2, CheckCircle, XCircle, Clock, AlertTriangle, LayoutGrid, List as ListIcon } from 'lucide-react';
 import type { JobEntry } from '../types';
 
 export const Dashboard: React.FC = () => {
     const { savedJobs, deleteJob, updateJobStatus, loading } = useJobContext();
     const [filter, setFilter] = useState<'all' | 'applied' | 'interviewing' | 'rejected' | 'offer'>('all');
     const [showAllDetails, setShowAllDetails] = useState(false);
+    const [viewMode, setViewMode] = useState<'list' | 'grid'>('list');
 
     if (loading) {
         return <div className="p-8 text-center">Loading jobs...</div>;
     }
 
-    const filteredJobs = savedJobs.filter(job => filter === 'all' || job.status === filter);
+    // 1. 排序：最新增加的在最前面
+    const sortedJobs = [...savedJobs].sort((a, b) =>
+        new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+    );
 
+    const filteredJobs = sortedJobs.filter(job => filter === 'all' || job.status === filter);
 
     return (
         <div className="space-y-6">
@@ -28,6 +33,28 @@ export const Dashboard: React.FC = () => {
                             <CardDescription>Manage and track your job applications.</CardDescription>
                         </div>
                         <div className="flex flex-wrap items-center gap-2">
+                            {/* 視圖切換按鈕 */}
+                            <div className="flex gap-1 bg-muted/30 p-1 rounded-lg mr-2">
+                                <Button
+                                    variant={viewMode === 'list' ? 'secondary' : 'ghost'}
+                                    size="icon"
+                                    className="h-8 w-8"
+                                    onClick={() => setViewMode('list')}
+                                    title="列表視圖"
+                                >
+                                    <ListIcon className="w-4 h-4" />
+                                </Button>
+                                <Button
+                                    variant={viewMode === 'grid' ? 'secondary' : 'ghost'}
+                                    size="icon"
+                                    className="h-8 w-8"
+                                    onClick={() => setViewMode('grid')}
+                                    title="卡片視圖"
+                                >
+                                    <LayoutGrid className="w-4 h-4" />
+                                </Button>
+                            </div>
+
                             <div className="flex gap-1 bg-muted/30 p-1 rounded-lg">
                                 {(['all', 'applied', 'interviewing', 'offer', 'rejected'] as const).map((s) => (
                                     <Button
@@ -60,7 +87,7 @@ export const Dashboard: React.FC = () => {
                             {filter === 'all' ? 'No saved jobs found. Start by pinning some jobs!' : `No jobs found with status "${filter}".`}
                         </div>
                     ) : (
-                        <div className="grid gap-4">
+                        <div className={`grid gap-4 ${viewMode === 'grid' ? 'grid-cols-1 md:grid-cols-2' : 'grid-cols-1'}`}>
                             {filteredJobs.map((job) => (
                                 <JobCard
                                     key={job.id}
@@ -141,7 +168,7 @@ const JobCard: React.FC<JobCardProps> = ({ job, isExpanded, onUpdateStatus, onDe
                         <h3 className="font-bold text-lg">{job.title}</h3>
                         {isExpanded && (
                             <p className="text-sm text-muted-foreground">
-                                {job.company} {job.location && `• ${job.location}`}
+                                {job.company} {job.location && `${job.location}`}
                             </p>
                         )}
                     </div>
