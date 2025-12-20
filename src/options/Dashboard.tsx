@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useJobContext } from '../contexts/JobContext';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../components/ui/card';
+import { Card } from '../components/ui/card';
 import { Button } from '../components/ui/button';
 import { Badge } from '../components/ui/badge';
 import { ExternalLink, Trash2, CheckCircle, XCircle, Clock, AlertTriangle, LayoutGrid, List as ListIcon } from 'lucide-react';
@@ -25,82 +25,81 @@ export const Dashboard: React.FC = () => {
 
     return (
         <div className="space-y-6">
-            <Card>
-                <CardHeader>
-                    <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                        <div>
-                            <CardTitle>My Jobs</CardTitle>
-                            <CardDescription>Manage and track your job applications.</CardDescription>
-                        </div>
-                        <div className="flex flex-wrap items-center gap-2">
-                            {/* 視圖切換按鈕 */}
-                            <div className="flex gap-1 bg-muted/30 p-1 rounded-lg mr-2">
-                                <Button
-                                    variant={viewMode === 'list' ? 'secondary' : 'ghost'}
-                                    size="icon"
-                                    className="h-8 w-8"
-                                    onClick={() => setViewMode('list')}
-                                    title="列表視圖"
-                                >
-                                    <ListIcon className="w-4 h-4" />
-                                </Button>
-                                <Button
-                                    variant={viewMode === 'grid' ? 'secondary' : 'ghost'}
-                                    size="icon"
-                                    className="h-8 w-8"
-                                    onClick={() => setViewMode('grid')}
-                                    title="卡片視圖"
-                                >
-                                    <LayoutGrid className="w-4 h-4" />
-                                </Button>
-                            </div>
-
-                            <div className="flex gap-1 bg-muted/30 p-1 rounded-lg">
-                                {(['all', 'applied', 'interviewing', 'offer', 'rejected'] as const).map((s) => (
-                                    <Button
-                                        key={s}
-                                        variant={filter === s ? 'default' : 'ghost'}
-                                        size="sm"
-                                        onClick={() => setFilter(s)}
-                                        className="capitalize h-8 px-3 text-xs"
-                                    >
-                                        {s}
-                                    </Button>
-                                ))}
-                            </div>
-                            <div className="h-6 w-px bg-border mx-1 hidden sm:block" />
-                            <Button
-                                variant={showAllDetails ? 'default' : 'outline'}
-                                size="sm"
-                                className="h-8 gap-2 text-xs"
-                                onClick={() => setShowAllDetails(!showAllDetails)}
-                            >
-                                <AlertTriangle className={`w-3.5 h-3.5 ${showAllDetails ? 'animate-pulse' : ''}`} />
-                                {showAllDetails ? '全頁詳細' : '全頁簡短'}
-                            </Button>
-                        </div>
+            {/* 頂部工具列：獨立於卡片之外，增加清晰度 */}
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
+                <div>
+                    <h2 className="text-xl font-bold tracking-tight text-slate-900">My Jobs</h2>
+                    <p className="text-sm text-slate-500 font-medium">Manage and track your job applications.</p>
+                </div>
+                <div className="flex flex-wrap items-center gap-2">
+                    {/* 視圖切換按鈕 */}
+                    <div className="flex gap-1 bg-slate-100 p-1 rounded-lg mr-2">
+                        <Button
+                            variant={viewMode === 'list' ? 'secondary' : 'ghost'}
+                            size="icon"
+                            className="h-8 w-8"
+                            onClick={() => setViewMode('list')}
+                            title="列表視圖"
+                        >
+                            <ListIcon className="w-4 h-4" />
+                        </Button>
+                        <Button
+                            variant={viewMode === 'grid' ? 'secondary' : 'ghost'}
+                            size="icon"
+                            className="h-8 w-8"
+                            onClick={() => setViewMode('grid')}
+                            title="卡片視圖"
+                        >
+                            <LayoutGrid className="w-4 h-4" />
+                        </Button>
                     </div>
-                </CardHeader>
-                <CardContent>
-                    {filteredJobs.length === 0 ? (
-                        <div className="text-center py-12 text-muted-foreground">
-                            {filter === 'all' ? 'No saved jobs found. Start by pinning some jobs!' : `No jobs found with status "${filter}".`}
-                        </div>
-                    ) : (
-                        <div className={`grid gap-4 ${viewMode === 'grid' ? 'grid-cols-1 md:grid-cols-2' : 'grid-cols-1'}`}>
-                            {filteredJobs.map((job) => (
-                                <JobCard
-                                    key={job.id}
-                                    job={job}
-                                    isExpanded={showAllDetails}
-                                    onUpdateStatus={updateJobStatus}
-                                    onDelete={deleteJob}
-                                />
-                            ))}
-                        </div>
-                    )}
-                </CardContent>
-            </Card>
+
+                    <div className="flex gap-1 bg-slate-100 p-1 rounded-lg">
+                        {(['all', 'applied', 'interviewing', 'offer', 'rejected'] as const).map((s) => (
+                            <Button
+                                key={s}
+                                variant={filter === s ? 'default' : 'ghost'}
+                                size="sm"
+                                onClick={() => setFilter(s)}
+                                className="capitalize h-8 px-3 text-xs"
+                            >
+                                {s}
+                            </Button>
+                        ))}
+                    </div>
+                    <div className="h-6 w-px bg-slate-200 mx-1 hidden sm:block" />
+                    <Button
+                        variant={showAllDetails ? 'default' : 'outline'}
+                        size="sm"
+                        className="h-8 gap-2 text-xs"
+                        onClick={() => setShowAllDetails(!showAllDetails)}
+                    >
+                        <AlertTriangle className={`w-3.5 h-3.5 ${showAllDetails ? 'animate-pulse' : ''}`} />
+                        {showAllDetails ? '全頁詳細' : '全頁簡短'}
+                    </Button>
+                </div>
+            </div>
+
+            {/* 職缺列表內容 */}
+            <div className="pb-8">
+                {filteredJobs.length === 0 ? (
+                    <div className="text-center py-20 bg-white rounded-xl border border-slate-200 shadow-sm text-slate-400 text-sm italic">
+                        {filter === 'all' ? 'No saved jobs found. Start by pinning some jobs!' : `No jobs found with status "${filter}".`}
+                    </div>
+                ) : (
+                    <div className={`grid gap-6 ${viewMode === 'grid' ? 'grid-cols-1 md:grid-cols-2' : 'grid-cols-1'}`}>
+                        {filteredJobs.map((job) => (
+                            <JobCard
+                                key={job.id}
+                                job={job}
+                                isExpanded={showAllDetails}
+                                onUpdateStatus={updateJobStatus}
+                                onDelete={deleteJob}
+                            />
+                        ))}
+                    </div>
+                )}
+            </div>
         </div>
     );
 };
@@ -121,7 +120,7 @@ const JobCard: React.FC<JobCardProps> = ({ job, isExpanded, onUpdateStatus, onDe
             case 'interviewing': return 'bg-purple-100 text-purple-800';
             case 'offer': return 'bg-green-100 text-green-800';
             case 'rejected': return 'bg-red-100 text-red-800';
-            default: return 'bg-gray-100 text-gray-800';
+            default: return 'bg-slate-100 text-slate-800';
         }
     };
 
@@ -137,7 +136,7 @@ const JobCard: React.FC<JobCardProps> = ({ job, isExpanded, onUpdateStatus, onDe
             case 'medium': return 'bg-yellow-50 text-yellow-700 border-yellow-100';
             case 'high': return 'bg-orange-50 text-orange-700 border-orange-100';
             case 'critical': return 'bg-red-100 text-red-900 border-red-200 font-bold underline';
-            default: return 'bg-gray-50 text-gray-600 border-gray-100';
+            default: return 'bg-slate-50 text-slate-600 border-slate-100';
         }
     };
 
@@ -160,9 +159,9 @@ const JobCard: React.FC<JobCardProps> = ({ job, isExpanded, onUpdateStatus, onDe
     };
 
     return (
-        <Card className="overflow-hidden border-muted/40 shadow-sm transition-shadow hover:shadow-md">
+        <Card className="overflow-hidden bg-white border-slate-200 shadow-md transition-all hover:shadow-lg hover:border-slate-300">
             {/* 上方區塊 */}
-            <div className="p-4 border-b bg-muted/10">
+            <div className="p-4 border-b border-slate-100 bg-slate-50/50">
                 <div className="flex items-start justify-between">
                     <div>
                         <h3 className="font-bold text-lg">{job.title}</h3>
