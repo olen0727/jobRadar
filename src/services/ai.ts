@@ -1,5 +1,5 @@
 import { analyzeJobWithAI as analyzeOpenAI, parseResumeWithAI as parseOpenAI, SYSTEM_PROMPT, RESUME_SYSTEM_PROMPT } from './openai';
-import { analyzeJobWithGemini, parseResumeWithGemini, SYSTEM_INSTRUCTION_JOB, SYSTEM_INSTRUCTION_RESUME } from './gemini';
+import { analyzeJobWithGemini, parseResumeWithGemini } from './gemini';
 import type { UserProfile, AnalysisResult } from '../types';
 import type { ScrapedJobData } from './scraper';
 import { storage } from './storage';
@@ -61,8 +61,11 @@ export const analyzeJob = async (job: ScrapedJobData, profile: UserProfile): Pro
             systemPrompt: SYSTEM_PROMPT // Default to OpenAI style prompt for trial
         });
 
+        const analysisResult = result as AnalysisResult;
+        analysisResult.aiModel = 'gpt-5-mini (Trial)'; // Trial default
+
         await storage.incrementTrialCount('job');
-        return result as AnalysisResult;
+        return analysisResult;
     }
 
     // Default to openai if not set

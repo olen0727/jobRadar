@@ -55,6 +55,7 @@ export interface AnalysisResult {
     commuteLabel: CommuteLabel; // 路程標籤
     extractedLocation?: string; // AI found location
     extractedSalary?: string; // AI found salary
+    aiModel?: string; // The model used for this analysis (e.g. "gpt-4o", "gemini-1.5-flash")
 }
 
 export type CommuteLabel =

@@ -160,7 +160,9 @@ ${job.description.substring(0, 25000)}
             });
         }
 
-        return JSON.parse(text) as AnalysisResult;
+        const parsed = JSON.parse(text) as AnalysisResult;
+        parsed.aiModel = modelName; // Inject model name
+        return parsed;
 
     } catch (error) {
         console.error('Gemini Analysis Failed:', error);

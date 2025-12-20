@@ -93,8 +93,19 @@
 - `user_profile`: `UserProfile` (含 Model config, Keys)。
 - `saved_jobs`: `JobEntry[]` (職缺清單，分析結果包含 `AnalysisResult` 結構)。
 - `usage_logs`: `UsageLog[]` (API 使用與費用歷史記錄)。
-- `trial_usage`: `TrialUsage` (紀錄 10 次 Job / 3 次 Resume 限制)。
+- `trial_usage`: `TrialUsage` (本地快取之已使用次數)。
 - `anonymous_id`: UUID (用於試用配額識別)。
+
+### 4.2. Supabase (Cloud Persistence)
+**類型**: Supabase PostgreSQL / Edge Functions。
+**目的**: 僅用於管理「無 Key (NoKey) 用戶」的試用配額與系統配置。
+**關鍵 Tables**:
+- `trial_usage`: 儲存 `anonymous_id` 對應的 `job_count` 與 `resume_count`，用於實施全域試用限制。
+- `system_config`: 存儲動態系統參數。包含：
+    - `max_jobs`: 試用用戶職缺分析上限。
+    - `max_resumes`: 試用用戶履歷解析上限。
+    - `new_user_limit_per_day`: 每日全域新用戶限制數。
+    - 模型開關與維護狀態等。
 
 ## 5. 外部整合 / API (External Integrations)
 
@@ -111,13 +122,14 @@
 ### 5.3. Supabase Edge Functions
 **功能摘要 (Function Summary)**: `rapid-responder`
 - **角色**: 作為即時回應者，接收來自 Chrome Extension 的無 Key 請求。
-- **機制**: 驗證請求來源後，轉發至後端 AI 服務 (OpenAI/Gemini)，並將結果即時回傳。
+- **機制**: 驗證請求來源後，根據後端資料庫限制執行 AI 推論，並將結果回傳。
 
 **運作描述 (Operation Logic)**:
 1. **接收請求**: 接收包含 `job` 或 `resume` 的 JSON payload。
-2. **身份限流**: 檢查 `anonymous_id` 是否超出每日/總量限制 (由 Extension 本地計數，Function 端做二次驗證或僅作無狀態轉發)。
-3. **AI 推論**: 使用 Supabase 環境變數中的官方 API Key 呼叫 LLM。
-4. **結果回傳**: 將 AI 分析後的 JSON 直接回傳給客戶端，**不將資料寫入任何資料庫**。
+2. **身份限流 (個人)**: 檢查 `trial_usage` 資料表，根據 `system_config` 中的 `max_resumes` 與 `max_jobs` 限制單一 `anonymous_id` 的分析次數。
+3. **暴力破解預防 (每日全域)**: 檢查當日不重複活躍使用者 (Active Users)，根據 `system_config` 中的 `new_user_limit_per_day` 限制每日享有免費試用額度的總人數。
+4. **AI 推論**: 通過限制檢查後，使用 Supabase 環境變數中的官方 API Key 呼叫 OpenAI API (`gpt-5-mini`)。
+5. **更新計數與回傳**: 成功獲取 AI 回應後，同步更新 `trial_usage` 的計數與 `updated_at` 時間戳記，並回傳分析結果。
 
 **資料欄位 (Data Fields)**:
 - **Request Payload**:
@@ -136,9 +148,11 @@
 ## 6. 安全性考量 (Security Considerations)
 
 **資料隱私**:
-- **零後端架構 (Zero-Backend)**: 核心資料 (Keys, Profile, Jobs) 僅存於本地。Supabase 僅作NoKey的試用轉發。
-- **API Keys**: 僅存儲於 `chrome.storage.local`。
-- **費用估算**: 全在客戶端計算，僅供參考。
+- **混合型隱私架構**: 
+    - **核心隱私**: 有 Key 用戶的所有資料 (API Keys, Profile, Jobs) 僅存於本地，不經過任何後端。
+    - **試用隔離**: 無 Key 用戶的分析內容不被儲存，僅在 Supabase 紀錄去識別化的 `anonymous_id` 與使用次數，以維持試用機制的運作。
+- **API Keys**: 僅存儲於 `chrome.storage.local`，絕不上傳雲端。
+- **費用估算**: 全在客戶端計算。
 
 ## 7. 專案識別 (Project Identification)
 

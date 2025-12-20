@@ -145,8 +145,9 @@ ${job.description.substring(0, 25000)}
         }
 
         try {
-            const parsed = JSON.parse(content);
-            return parsed as AnalysisResult;
+            const parsed = JSON.parse(content) as AnalysisResult;
+            parsed.aiModel = model; // Inject model name
+            return parsed;
         } catch (e) {
             throw new OpenAIError('Failed to parse AI response JSON');
         }
