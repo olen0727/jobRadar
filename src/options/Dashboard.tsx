@@ -3,6 +3,7 @@ import { useJobContext } from '../contexts/JobContext';
 import { Card } from '../components/ui/card';
 import { Button } from '../components/ui/button';
 import { ExternalLink, CheckCircle, XCircle, Clock, AlertTriangle, LayoutGrid, List as ListIcon } from 'lucide-react';
+import { cn } from '../lib/utils';
 import type { JobEntry } from '../types';
 
 export const Dashboard: React.FC = () => {
@@ -34,18 +35,18 @@ export const Dashboard: React.FC = () => {
                     {/* 視圖切換按鈕 */}
                     <div className="flex gap-1 bg-slate-100 p-1 rounded-lg mr-2">
                         <Button
-                            variant={viewMode === 'list' ? 'secondary' : 'ghost'}
+                            variant={viewMode === 'list' ? 'default' : 'ghost'}
                             size="icon"
-                            className="h-8 w-8"
+                            className="h-8 w-8 transition-all"
                             onClick={() => setViewMode('list')}
                             title="列表視圖"
                         >
                             <ListIcon className="w-4 h-4" />
                         </Button>
                         <Button
-                            variant={viewMode === 'grid' ? 'secondary' : 'ghost'}
+                            variant={viewMode === 'grid' ? 'default' : 'ghost'}
                             size="icon"
-                            className="h-8 w-8"
+                            className="h-8 w-8 transition-all"
                             onClick={() => setViewMode('grid')}
                             title="卡片視圖"
                         >
