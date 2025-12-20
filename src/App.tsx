@@ -12,11 +12,11 @@ import { AlertCircle, Briefcase, CheckCircle, ExternalLink, ShieldAlert, Sparkle
 import { cn } from './lib/utils';
 import { v4 as uuidv4 } from 'uuid';
 
-type ViewMode = 'menu' | 'job' | 'resume';
+type ViewMode = 'menu' | 'job' | 'resume' | 'detecting' | 'unknown';
 
 const PopupContent = () => {
   const { userProfile, saveProfile, loading: contextLoading, addJob } = useJobContext();
-  const [mode, setMode] = useState<ViewMode>('menu');
+  const [mode, setMode] = useState<ViewMode>('detecting');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -28,17 +28,6 @@ const PopupContent = () => {
   // Resume Flow State
   const [parsedProfile, setParsedProfile] = useState<UserProfile | null>(null);
   const [profileSaved, setProfileSaved] = useState(false);
-
-  useEffect(() => {
-    // If no API Key, stay on menu or redirect
-    if (!contextLoading && userProfile) {
-      if (userProfile.apiProvider === 'gemini' && !userProfile.geminiApiKey) {
-        // Warn (Optional UI feedback could go here)
-      } else if (userProfile.apiProvider === 'openai' && !userProfile.apiKey) {
-        // Warn
-      }
-    }
-  }, [contextLoading, userProfile]);
 
   const openDashboard = () => chrome.runtime.openOptionsPage();
 
@@ -61,7 +50,6 @@ const PopupContent = () => {
       if (userProfile?.apiProvider === 'gemini') {
         if (!userProfile.geminiApiKey) throw new Error('Please set Gemini API Key in Options first.');
       } else {
-        // Default to OpenAI
         if (!userProfile?.apiKey) throw new Error('Please set OpenAI API Key in Options first.');
       }
 
@@ -73,7 +61,6 @@ const PopupContent = () => {
 
       const aiResult = await analyzeJob(result, userProfile);
       setAnalysis(aiResult);
-
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Analysis failed');
     } finally {
@@ -92,7 +79,6 @@ const PopupContent = () => {
       if (userProfile?.apiProvider === 'gemini') {
         if (!userProfile.geminiApiKey) throw new Error('Please set Gemini API Key in Options first.');
       } else {
-        // Default to OpenAI
         if (!userProfile?.apiKey) throw new Error('Please set OpenAI API Key in Options first.');
       }
 
@@ -101,16 +87,37 @@ const PopupContent = () => {
         throw new Error('No valid text found on this page to parse.');
       }
 
-      // Use description (full text) for resume parsing
       const newProfile = await parseResume(result.description, userProfile);
       setParsedProfile(newProfile);
-
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Parsing failed');
     } finally {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    const initDetection = async () => {
+      if (contextLoading) return;
+      setMode('detecting');
+      setLoading(true);
+      try {
+        const result = await getActiveTabContent();
+        if (result && result.pageType === 'job') {
+          startJobAnalysis();
+        } else if (result && result.pageType === 'resume') {
+          startResumeParsing();
+        } else {
+          setMode('unknown');
+          setLoading(false);
+        }
+      } catch (err) {
+        setMode('unknown');
+        setLoading(false);
+      }
+    };
+    initDetection();
+  }, [contextLoading]);
 
   const handleSaveJob = async () => {
     if (!jobData || !analysis) return;
@@ -128,17 +135,71 @@ const PopupContent = () => {
     };
     await addJob(newJob);
     setJobSaved(true);
+    setTimeout(() => {
+      chrome.tabs.create({ url: chrome.runtime.getURL('options.html#dashboard') });
+    }, 1000);
   };
 
   const handleUpdateProfile = async () => {
     if (!parsedProfile) return;
     await saveProfile(parsedProfile);
     setProfileSaved(true);
+    setTimeout(() => {
+      chrome.tabs.create({ url: chrome.runtime.getURL('options.html#settings?remind=location') });
+    }, 1000);
   };
 
   if (contextLoading) return <div className="p-8 text-center">Loading context...</div>;
 
-  // VIEW: MENU (Landing)
+  // VIEW: DETECTING
+  if (mode === 'detecting') {
+    return (
+      <div className="w-[400px] h-[500px] bg-background flex flex-col items-center justify-center p-6 gap-4">
+        <Sparkles className="w-12 h-12 text-primary animate-pulse" />
+        <h2 className="text-xl font-bold">偵測頁面中...</h2>
+        <p className="text-sm text-muted-foreground text-center">正在判斷此頁面為職缺描述或個人履歷</p>
+        <Skeleton className="h-4 w-3/4" />
+      </div>
+    );
+  }
+
+  // VIEW: UNKNOWN
+  if (mode === 'unknown') {
+    return (
+      <div className="w-[400px] h-[500px] bg-background flex flex-col p-6 gap-6">
+        <header className="flex justify-between items-center mb-4">
+          <div className="flex items-center gap-2 font-bold text-lg">
+            <Briefcase className="w-5 h-5" /> JobRadar AI
+          </div>
+          <Button variant="ghost" size="icon" onClick={openDashboard}><ExternalLink className="w-4 h-4" /></Button>
+        </header>
+
+        <div className="flex-1 flex flex-col items-center justify-center text-center gap-4">
+          <Search className="w-12 h-12 text-slate-300" />
+          <div>
+            <h3 className="font-bold text-lg text-slate-700">無法自動判別頁面</h3>
+            <p className="text-sm text-slate-500 mt-1 px-4">
+              此頁面看起來不像是典型的職缺或履歷。您可以嘗試手動選擇功能，或前往設定頁面調整。
+            </p>
+          </div>
+        </div>
+
+        <div className="space-y-3">
+          <Button className="w-full h-14 text-sm" variant="outline" onClick={startResumeParsing}>
+            <FileText className="w-5 h-5 mr-2" />
+            手動解析履歷 (Resume Parse)
+          </Button>
+          <Button className="w-full h-14 text-sm" onClick={startJobAnalysis}>
+            <Search className="w-5 h-5 mr-2" />
+            手動分析職缺 (Job Analyze)
+          </Button>
+          <Button variant="ghost" className="w-full text-xs text-slate-400" onClick={() => setMode('menu')}>返回主選單</Button>
+        </div>
+      </div>
+    );
+  }
+
+  // VIEW: MENU
   if (mode === 'menu') {
     return (
       <div className="w-[400px] min-h-[500px] bg-background text-foreground flex flex-col">
@@ -149,20 +210,6 @@ const PopupContent = () => {
           <Button variant="ghost" size="icon" onClick={openDashboard}><ExternalLink className="w-4 h-4" />setting</Button>
         </header>
         <main className="flex-1 p-6 flex flex-col gap-4 justify-center">
-          <Button
-            className="h-12 text-sm flex gap-2 border-dashed"
-            variant="outline"
-            onClick={async () => {
-              try {
-                const result = await getActiveTabContent();
-                alert(`頁面判定結果: ${result.pageType}`);
-              } catch (e) {
-                alert('判定失敗: ' + e);
-              }
-            }}
-          >
-            🔍 測試頁面判定 (Debug)
-          </Button>
           <Button className="h-24 text-lg flex flex-col gap-2" variant="outline" onClick={startResumeParsing}>
             <FileText className="w-8 h-8" />
             履歷解析 (Resume Parse)
@@ -215,7 +262,6 @@ const PopupContent = () => {
                   </Badge>
                 )}
               </div>
-              {/* Match Score Reason */}
               {analysis.matchScoreExplanation && analysis.matchScoreExplanation.length > 0 && (
                 <div className="text-xs text-muted-foreground mt-2 bg-muted/40 p-2 rounded">
                   <span className="font-semibold block mb-1">Score Reason:</span>
@@ -233,7 +279,7 @@ const PopupContent = () => {
               </Card>
 
               <Button className="w-full" onClick={handleSaveJob} disabled={jobSaved}>
-                {jobSaved ? <><CheckCircle className="mr-2 w-4 h4" /> Saved</> : "Save to Dashboard"}
+                {jobSaved ? <><CheckCircle className="mr-2 w-4 h4" /> Saved & Redirecting...</> : "儲存並前往列表"}
               </Button>
             </>
           ) : null}
@@ -294,7 +340,7 @@ const PopupContent = () => {
             </div>
 
             <Button className="w-full" onClick={handleUpdateProfile} disabled={profileSaved}>
-              {profileSaved ? <><CheckCircle className="mr-2 w-4 h4" /> Profile Updated</> : "Update Settings"}
+              {profileSaved ? <><CheckCircle className="mr-2 w-4 h4" /> Profile Updated</> : "更新並前往設定頁"}
             </Button>
             {profileSaved && <p className="text-xs text-center text-green-600">Settings updated successfully!</p>}
           </div>

@@ -31,6 +31,18 @@ export const Settings: React.FC = () => {
             setFormData(userProfile);
             setSkillsInput(userProfile.skills.join(', '));
         }
+
+        // Address location reminder focus handler
+        const handleFocusRequest = () => {
+            const addressInput = document.getElementById('homeLocation');
+            if (addressInput) {
+                addressInput.focus();
+                addressInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
+        };
+
+        window.addEventListener('focus-home-location', handleFocusRequest);
+        return () => window.removeEventListener('focus-home-location', handleFocusRequest);
     }, [userProfile]);
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
