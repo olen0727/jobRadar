@@ -98,24 +98,42 @@ const JobCard: React.FC<JobCardProps> = ({ job, isExpanded, onUpdateStatus, onDe
         }
     };
 
-    const getScoreColor = (score: number) => {
-        if (score >= 80) return 'text-green-600';
-        if (score >= 60) return 'text-yellow-600';
-        return 'text-red-600';
+    const getScoreStyles = (score: number) => {
+        if (score >= 80) return 'bg-green-100 text-green-800 border-green-200';
+        if (score >= 60) return 'bg-yellow-100 text-yellow-800 border-yellow-200';
+        return 'bg-red-100 text-red-800 border-red-200';
     };
 
-    const getRiskColor = (level: string) => {
+    const getRiskStyles = (level: string) => {
         switch (level) {
-            case 'low': return 'text-green-600';
-            case 'medium': return 'text-yellow-600';
-            case 'high': return 'text-orange-600';
-            case 'critical': return 'text-red-600';
-            default: return 'text-gray-600';
+            case 'low': return 'bg-green-50 text-green-700 border-green-100';
+            case 'medium': return 'bg-yellow-50 text-yellow-700 border-yellow-100';
+            case 'high': return 'bg-orange-50 text-orange-700 border-orange-100';
+            case 'critical': return 'bg-red-100 text-red-900 border-red-200 font-bold underline';
+            default: return 'bg-gray-50 text-gray-600 border-gray-100';
+        }
+    };
+
+    const getCommuteStyles = (label: string) => {
+        switch (label) {
+            case '你家旁邊':
+            case '舒適距離':
+                return 'bg-emerald-100 text-emerald-800 border-emerald-200';
+            case '標準通勤':
+                return 'bg-blue-100 text-blue-800 border-blue-200';
+            case '舟車勞頓':
+                return 'bg-orange-100 text-orange-800 border-orange-200';
+            case '極限通勤':
+                return 'bg-rose-100 text-rose-800 border-rose-200';
+            case '遠端/外地':
+                return 'bg-purple-100 text-purple-800 border-purple-200';
+            default:
+                return 'bg-slate-100 text-slate-800 border-slate-200';
         }
     };
 
     return (
-        <Card className="overflow-hidden">
+        <Card className="overflow-hidden border-muted/40 shadow-sm transition-shadow hover:shadow-md">
             {/* 上方區塊 */}
             <div className="p-4 border-b bg-muted/10">
                 <div className="flex items-start justify-between">
@@ -166,22 +184,22 @@ const JobCard: React.FC<JobCardProps> = ({ job, isExpanded, onUpdateStatus, onDe
                     )}
 
                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 text-center text-sm">
-                        <div className="p-2 rounded bg-muted/30">
-                            <div className={`font-bold ${getScoreColor(analysis?.matchScore || 0)}`}>
-                                <label className="mr-2 text-muted-foreground font-normal text-xs uppercase tracking-wider">契合度:</label>
-                                {analysis?.matchScore || 0}%
+                        <div className={`p-2 rounded-lg border transition-colors ${getScoreStyles(analysis?.matchScore || 0)}`}>
+                            <div className="font-bold flex-col items-center">
+                                <label className="mr-2 text-muted-foreground font-normal text-xs uppercase tracking-wider">契合度</label>
+                                <span className="text-base">{analysis?.matchScore || 0}%</span>
                             </div>
                         </div>
-                        <div className="p-2 rounded bg-muted/30">
-                            <div className={`font-bold capitalize ${getRiskColor(analysis?.riskAnalysis?.level || '')}`}>
-                                <label className="mr-2 text-muted-foreground font-normal text-xs uppercase tracking-wider">風險:</label>
-                                {analysis?.riskAnalysis?.level || '未知'}
+                        <div className={`p-2 rounded-lg border transition-colors ${getRiskStyles(analysis?.riskAnalysis?.level || '')}`}>
+                            <div className="font-bold flex-col items-center">
+                                <label className="mr-2 text-muted-foreground font-normal text-xs uppercase tracking-wider">風險</label>
+                                <span className="text-base capitalize">{analysis?.riskAnalysis?.level || '未知'}</span>
                             </div>
                         </div>
-                        <div className="p-2 rounded bg-muted/30">
-                            <div className="font-bold text-blue-600">
-                                <label className="mr-2 text-muted-foreground font-normal text-xs uppercase tracking-wider">路程:</label>
-                                {analysis?.commuteLabel || '未知'}
+                        <div className={`p-2 rounded-lg border transition-colors ${getCommuteStyles(analysis?.commuteLabel || '')}`}>
+                            <div className="font-bold flex-col items-center">
+                                <label className="mr-2 text-muted-foreground font-normal text-xs uppercase tracking-wider">路程</label>
+                                <span className="text-base">{analysis?.commuteLabel || '未知'}</span>
                             </div>
                         </div>
                     </div>
