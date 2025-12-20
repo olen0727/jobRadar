@@ -37,6 +37,7 @@ JSON Structure:
   "workPressure": "Pressure estimate string",
   "keySkills": "Top 3 skills string",
   "commuteLabel": "你家旁邊" | "舒適距離" | "標準通勤" | "舟車勞頓" | "極限通勤" | "遠端/外地" | "未知",
+  "commuteDescription": "String explaining the commute detail based on home location",
   "extractedLocation": "string", // If the scraper missed the address, find it in the content
   "extractedSalary": "string" // If the scraper missed the salary, find it in the content
 }
@@ -224,6 +225,7 @@ export const parseResumeWithGemini = async (
         const parsed = JSON.parse(text);
 
         return {
+            ...profile,
             name: parsed.name || '',
             targetRole: parsed.targetRole || '',
             yearsOfExperience: typeof parsed.yearsOfExperience === 'number' ? parsed.yearsOfExperience : 0,
@@ -233,7 +235,6 @@ export const parseResumeWithGemini = async (
             homeLocation: parsed.homeLocation || '',
             experience: parsed.experience || '',
             bio: parsed.bio || '',
-            apiKey: '', // Don't wipe existing keys
             geminiApiKey: apiKey,
             apiProvider: 'gemini'
         };

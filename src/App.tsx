@@ -212,7 +212,7 @@ const PopupContent = () => {
                   </ul>
                 </div>
               )}
-              {analysis.commute && <p className="text-xs text-muted-foreground mt-1">Commute: {analysis.commute}</p>}
+              {analysis.commuteDescription && <p className="text-xs text-muted-foreground mt-1">Commute: {analysis.commuteDescription}</p>}
 
               <Card className="bg-primary/5 border-primary/20">
                 <CardContent className="p-3 text-sm">{analysis.strategicAdvice}</CardContent>

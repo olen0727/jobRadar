@@ -289,7 +289,7 @@ const JobCard: React.FC<JobCardProps> = ({ job, isExpanded, onUpdateStatus, onDe
                                     <Clock className="w-3 h-3 text-blue-500" /> 通勤細節
                                 </h4>
                                 <p className="text-muted-foreground text-xs text-pretty">
-                                    {analysis?.commute || '無詳細資訊'}
+                                    {analysis?.commuteDescription || '無詳細資訊'}
                                 </p>
                             </div>
                         </div>

@@ -40,7 +40,7 @@ export interface AnalysisResult {
     salaryPotential: string; // 薪資潛力
     workPressure: string; // 工作壓力
     keySkills: string; // 主要技能
-    commute: string; // 路程評估
+    commuteDescription: string; // 路程評估
     commuteLabel: CommuteLabel; // 路程標籤
     extractedLocation?: string; // AI found location
     extractedSalary?: string; // AI found salary

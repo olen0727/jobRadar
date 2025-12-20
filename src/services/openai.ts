@@ -32,7 +32,7 @@ JSON Structure:
   "salaryPotential": "Estimated annual salary (e.g. '1.5M - 1.8M TWD')",
   "workPressure": "Work pressure estimate (e.g. 'High - Oncall required', 'Low - 9 to 5')",
   "keySkills": "Top 3 critical skills required (e.g. 'React, Golang, AWS')",
-  "commute": "Estimated commute time/distance from user's home location (if provided). Guess based on city/district. (e.g. '~40 mins from Xinyi', 'Remote')",
+  "commuteDescription": "Estimated commute time/distance from user's home location (if provided). Guess based on city/district. (e.g. '~40 mins from Xinyi', 'Remote')",
   "commuteLabel": "Label string based on strict rules below",
   "extractedLocation": "string", // If the scraper missed the address, find it in the content
   "extractedSalary": "string" // If the scraper missed the salary, find it in the content
@@ -42,7 +42,7 @@ Constraint:
 - If the company looks like a gambling/betting/grey industry (keywords: 運維, 項目, 高併發 without specific product, customer service for gaming, 菲律賓/柬埔寨 location), set risk level to 'high' or 'critical'.
 - Be realistic about salary vs. workload.
 - If the JD is in Traditional Chinese, reply in Traditional Chinese.
-- For 'commute', use the User's Home Location to estimate roughly. If User Home is unknown, say 'Unknown'. If Job is Remote, say 'Remote'.
+- For 'commuteDescription', use the User's Home Location to estimate roughly. If User Home is unknown, say 'Unknown'. If Job is Remote, say 'Remote'.
 - Commute Label Rules (Strictly follow these):
   - < 10 mins: "你家旁邊"
   - 10-20 mins: "舒適距離"
