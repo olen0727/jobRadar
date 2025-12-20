@@ -1,8 +1,9 @@
-import type { UserProfile, JobEntry } from '../types';
+import type { UserProfile, JobEntry, UsageLog } from '../types';
 
 interface StorageSchema {
     user_profile: UserProfile;
     saved_jobs: JobEntry[];
+    usage_logs: UsageLog[];
 }
 
 export const storage = {
@@ -40,5 +41,22 @@ export const storage = {
     getSavedJobs: async (): Promise<JobEntry[]> => {
         const result = await storage.get('saved_jobs');
         return result.saved_jobs || [];
+    },
+
+    // Usage Logs Helpers
+    getUsageLogs: async (): Promise<UsageLog[]> => {
+        const result = await storage.get('usage_logs');
+        return result.usage_logs || [];
+    },
+
+    saveUsageLog: async (log: UsageLog): Promise<void> => {
+        const logs = await storage.getUsageLogs();
+        // Prepend new log, keep only last 100
+        const updatedLogs = [log, ...logs].slice(0, 100);
+        await storage.set({ usage_logs: updatedLogs });
+    },
+
+    clearUsageLogs: async (): Promise<void> => {
+        await storage.set({ usage_logs: [] });
     }
 };

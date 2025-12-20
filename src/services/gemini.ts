@@ -1,5 +1,6 @@
 import type { UserProfile, AnalysisResult } from '../types';
 import type { ScrapedJobData } from './scraper';
+import { storage } from './storage';
 
 const MODEL_NAME = 'gemini-3-flash-preview'; // User specified
 
@@ -122,6 +123,21 @@ ${job.description.substring(0, 30000)}
 
         if (!text) throw new GeminiError('No content generated');
 
+        // Log Usage
+        const usage = result.usageMetadata;
+        if (usage) {
+            await storage.saveUsageLog({
+                id: crypto.randomUUID(),
+                timestamp: new Date().toISOString(),
+                provider: 'gemini',
+                model: MODEL_NAME,
+                operation: 'job_analysis',
+                inputTokens: usage.promptTokenCount,
+                outputTokens: usage.candidatesTokenCount,
+                totalTokens: usage.totalTokenCount
+            });
+        }
+
         return JSON.parse(text) as AnalysisResult;
 
     } catch (error) {
@@ -167,6 +183,21 @@ export const parseResumeWithGemini = async (
         const text = result.candidates?.[0]?.content?.parts?.[0]?.text;
 
         if (!text) throw new GeminiError('No content generated');
+
+        // Log Usage
+        const usage = result.usageMetadata;
+        if (usage) {
+            await storage.saveUsageLog({
+                id: crypto.randomUUID(),
+                timestamp: new Date().toISOString(),
+                provider: 'gemini',
+                model: MODEL_NAME,
+                operation: 'resume_parsing',
+                inputTokens: usage.promptTokenCount,
+                outputTokens: usage.candidatesTokenCount,
+                totalTokens: usage.totalTokenCount
+            });
+        }
 
         const parsed = JSON.parse(text);
 

@@ -132,7 +132,7 @@ const PopupContent = () => {
           <div className="flex items-center gap-2 font-bold text-lg">
             <Briefcase className="w-5 h-5" /> JobRadar AI
           </div>
-          <Button variant="ghost" size="icon" onClick={openDashboard}><ExternalLink className="w-4 h-4" /></Button>
+          <Button variant="ghost" size="icon" onClick={openDashboard}><ExternalLink className="w-4 h-4" />setting</Button>
         </header>
         <main className="flex-1 p-6 flex flex-col gap-4 justify-center">
           <Button className="h-24 text-lg flex flex-col gap-2" variant="outline" onClick={startResumeParsing}>

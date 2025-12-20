@@ -47,3 +47,14 @@ export interface JobEntry {
     createdAt: string; // ISO Date
     notes?: string;
 }
+
+export interface UsageLog {
+    id: string;
+    timestamp: string; // ISO Date
+    provider: 'openai' | 'gemini';
+    model: string;
+    operation: 'job_analysis' | 'resume_parsing';
+    inputTokens: number;
+    outputTokens: number;
+    totalTokens: number;
+}

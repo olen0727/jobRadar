@@ -1,5 +1,6 @@
 import type { UserProfile, AnalysisResult } from '../types';
 import type { ScrapedJobData } from './scraper';
+import { storage } from './storage';
 
 export class OpenAIError extends Error {
     constructor(message: string) {
@@ -100,6 +101,20 @@ ${job.description.substring(0, 25000)}
         const result = await response.json();
         const content = result.choices[0].message.content;
 
+        // Log Usage
+        if (result.usage) {
+            await storage.saveUsageLog({
+                id: crypto.randomUUID(),
+                timestamp: new Date().toISOString(),
+                provider: 'openai',
+                model: 'gpt-4o', // or result.model
+                operation: 'job_analysis',
+                inputTokens: result.usage.prompt_tokens,
+                outputTokens: result.usage.completion_tokens,
+                totalTokens: result.usage.total_tokens
+            });
+        }
+
         try {
             const parsed = JSON.parse(content);
             return parsed as AnalysisResult;
@@ -165,8 +180,24 @@ export const parseResumeWithAI = async (
             throw new OpenAIError(errorData.error?.message || 'API Error');
         }
 
+
         const result = await response.json();
         const content = result.choices[0].message.content;
+
+        // Log Usage
+        if (result.usage) {
+            await storage.saveUsageLog({
+                id: crypto.randomUUID(),
+                timestamp: new Date().toISOString(),
+                provider: 'openai',
+                model: 'gpt-4o',
+                operation: 'resume_parsing',
+                inputTokens: result.usage.prompt_tokens,
+                outputTokens: result.usage.completion_tokens,
+                totalTokens: result.usage.total_tokens
+            });
+        }
+
         const parsed = JSON.parse(content);
 
         // Hydrate missing fields to ensure UserProfile shape
