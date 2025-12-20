@@ -160,12 +160,20 @@ const JobCard: React.FC<JobCardProps> = ({ job, isExpanded, onUpdateStatus, onDe
     return (
         <Card className="overflow-hidden bg-white border-slate-200 shadow-md transition-all hover:shadow-lg hover:border-slate-300">
             {/* 上方區塊 */}
-            <div className="p-4 border-b border-slate-100 bg-slate-50/50">
+            <div className="p-2 border-b border-slate-100 bg-slate-50/50">
                 <div className="flex items-start justify-between">
-                    <div>
-                        <h3 className="font-bold text-lg">{job.title}</h3>
+                    <div className="group">
+                        <a
+                            href={job.url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center gap-1.5 hover:text-primary transition-colors"
+                        >
+                            <h3 className="font-bold text-lg leading-snug hover:underline">{job.title}</h3>
+                            <ExternalLink className="w-4 h-4 text-slate-400 group-hover:text-primary transition-colors" />
+                        </a>
                         <p className="text-sm text-muted-foreground">
-                            {job.company} {isExpanded && job.location && `· ${job.location}`}
+                            {job.company} {isExpanded && job.location && ` · ${job.location}`}
                         </p>
                     </div>
                     <select
@@ -289,22 +297,12 @@ const JobCard: React.FC<JobCardProps> = ({ job, isExpanded, onUpdateStatus, onDe
                 )}
             </div>
 
-            <div className="p-4 bg-muted/20 border-t flex flex-wrap items-center justify-between gap-3">
-                <div className="flex items-center gap-2">
-                    <a href={job.url} target="_blank" rel="noopener noreferrer">
-                        <Button size="sm" variant="outline" className="h-8 gap-1 text-xs bg-white">
-                            <ExternalLink className="w-3 h-3" />
-                            查看職缺
-                        </Button>
-                    </a>
+            {/* 底部時間標記 */}
+            {/* <div className="px-4 pb-3 flex justify-end">
+                <div className="text-[10px] text-muted-foreground font-medium italic">
+                    Added: {new Date(job.createdAt).toLocaleDateString()}
                 </div>
-
-                <div className="flex items-center gap-2">
-                    <div className="text-[10px] text-muted-foreground font-medium">
-                        Added: {new Date(job.createdAt).toLocaleDateString()}
-                    </div>
-                </div>
-            </div>
+            </div> */}
         </Card>
     );
 };

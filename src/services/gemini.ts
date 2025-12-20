@@ -36,8 +36,9 @@ JSON Structure:
   "salaryPotential": "Estimated salary string",
   "workPressure": "Pressure estimate string",
   "keySkills": "Top 3 skills string",
-  "commute": "Commute estimate string",
-  "commuteLabel": "你家旁邊" | "舒適距離" | "標準通勤" | "舟車勞頓" | "極限通勤" | "遠端/外地" | "未知"
+  "commuteLabel": "你家旁邊" | "舒適距離" | "標準通勤" | "舟車勞頓" | "極限通勤" | "遠端/外地" | "未知",
+  "extractedLocation": "string", // If the scraper missed the address, find it in the content
+  "extractedSalary": "string" // If the scraper missed the salary, find it in the content
 }
 
 Constraint:

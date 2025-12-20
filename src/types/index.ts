@@ -42,6 +42,8 @@ export interface AnalysisResult {
     keySkills: string; // 主要技能
     commute: string; // 路程評估
     commuteLabel: CommuteLabel; // 路程標籤
+    extractedLocation?: string; // AI found location
+    extractedSalary?: string; // AI found salary
 }
 
 export type CommuteLabel =

@@ -51,7 +51,7 @@ export const scrapePageScript = (): ScrapedJobData => {
                 }
 
                 data.salary = getText('.job-header__salary') || getText('.job-content-table__data');
-                data.location = getText('.job-address');
+                data.location = getText('.job-address') || getText('.job-header__info p:last-child') || getText('p[class*="address"]');
                 break;
 
             case 'yourator':
@@ -60,7 +60,7 @@ export const scrapePageScript = (): ScrapedJobData => {
                 data.company = getText('.company-title') || getText('h2');
                 data.description = getText('.job-description') || getText('section.content');
                 data.salary = getText('.salary');
-                data.location = getText('.location');
+                data.location = getText('.location') || getText('.company-info__address') || getText('i.fa-map-marker-alt + span');
                 break;
 
             case 'linkedin':
@@ -69,9 +69,11 @@ export const scrapePageScript = (): ScrapedJobData => {
                 data.title = getText('.job-details-jobs-unified-top-card__job-title h1');
                 data.company = getText('.job-details-jobs-unified-top-card__company-name');
                 data.description = getText('#job-details') || getText('.jobs-description');
+                data.location = getText('.job-details-jobs-unified-top-card__primary-description span:nth-child(1)');
                 // Fallback for public view
                 if (!data.title) data.title = getText('.top-card-layout__title');
                 if (!data.company) data.company = getText('.topcard__org-name-link');
+                if (!data.location) data.location = getText('.topcard__item--bullet');
                 break;
 
             default:
@@ -79,6 +81,14 @@ export const scrapePageScript = (): ScrapedJobData => {
                 data.title = document.title;
                 // Naive heuristic: Assume H1 is title, longest P block is description
                 data.description = document.body.innerText.substring(0, 25000); // Increased limit
+
+                // Address heuristic: Search for common TW address prefixes
+                const addrRegex = /(台北市|新北市|桃園市|台中市|臺中市|台南市|臺南市|高雄市|新竹市|新竹縣|苗栗縣|彰化縣|南投縣|雲林縣|嘉義市|嘉義縣|屏東縣|宜蘭縣|花蓮縣|台東縣|臺東縣|澎湖縣|金門縣|連江縣)[^ \n\t]{2,50}/;
+                const text = document.body.innerText;
+                const matchResult = text.match(addrRegex);
+                if (matchResult) {
+                    data.location = matchResult[0];
+                }
                 break;
         }
 

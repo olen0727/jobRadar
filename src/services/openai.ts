@@ -33,7 +33,9 @@ JSON Structure:
   "workPressure": "Work pressure estimate (e.g. 'High - Oncall required', 'Low - 9 to 5')",
   "keySkills": "Top 3 critical skills required (e.g. 'React, Golang, AWS')",
   "commute": "Estimated commute time/distance from user's home location (if provided). Guess based on city/district. (e.g. '~40 mins from Xinyi', 'Remote')",
-  "commuteLabel": "Label string based on strict rules below"
+  "commuteLabel": "Label string based on strict rules below",
+  "extractedLocation": "string", // If the scraper missed the address, find it in the content
+  "extractedSalary": "string" // If the scraper missed the salary, find it in the content
 }
 
 Constraint:
