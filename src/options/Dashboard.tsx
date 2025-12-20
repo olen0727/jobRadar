@@ -121,10 +121,11 @@ const JobCard: React.FC<JobCardProps> = ({ job, isExpanded, onUpdateStatus, onDe
                 <div className="flex items-start justify-between">
                     <div>
                         <h3 className="font-bold text-lg">{job.title}</h3>
-                        <p className="text-sm text-muted-foreground">【隱藏】
-                            {job.company} {job.location && `• ${job.location}`}
-                        </p>
-
+                        {isExpanded && (
+                            <p className="text-sm text-muted-foreground">
+                                {job.company} {job.location && `• ${job.location}`}
+                            </p>
+                        )}
                     </div>
                     <Badge className={getStatusColor(job.status)} variant="secondary">
                         {job.status}
@@ -143,20 +144,26 @@ const JobCard: React.FC<JobCardProps> = ({ job, isExpanded, onUpdateStatus, onDe
                         <span className="font-semibold text-foreground block">工作壓力</span>
                         <p className="text-muted-foreground">{analysis?.workPressure || '無'}</p>
                     </div>
-                    <div>【隱藏】
-                        <span className="font-semibold text-foreground block">核心價值</span>
-                        <p className="text-muted-foreground">{analysis?.coreValue || '無'}</p>
-                    </div>
-                    <div>【隱藏】
-                        <span className="font-semibold text-foreground block">主要技能</span>
-                        <p className="text-muted-foreground">{analysis?.keySkills || '無'}</p>
-                    </div>
+                    {isExpanded && (
+                        <>
+                            <div>
+                                <span className="font-semibold text-foreground block">核心價值</span>
+                                <p className="text-muted-foreground">{analysis?.coreValue || '無'}</p>
+                            </div>
+                            <div>
+                                <span className="font-semibold text-foreground block">主要技能</span>
+                                <p className="text-muted-foreground">{analysis?.keySkills || '無'}</p>
+                            </div>
+                        </>
+                    )}
                 </div>
 
                 <div className="pt-2 border-t">
-                    <div className="flex items-center justify-between mb-2">【隱藏】
-                        <span className="font-bold text-sm">評分與概況</span>
-                    </div>
+                    {isExpanded && (
+                        <div className="flex items-center justify-between mb-2">
+                            <span className="font-bold text-sm">評分與概況</span>
+                        </div>
+                    )}
 
                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 text-center text-sm">
                         <div className="p-2 rounded bg-muted/30">
