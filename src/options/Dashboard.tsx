@@ -8,7 +8,16 @@ import type { JobEntry } from '../types';
 export const Dashboard: React.FC = () => {
     const { savedJobs, deleteJob, updateJobStatus, loading } = useJobContext();
     const [filter, setFilter] = useState<'all' | 'saved' | 'applied' | 'offer' | 'rejected'>('all');
-    const [showAllDetails, setShowAllDetails] = useState(false);
+    // Load preference from localStorage, default to true (Detailed/List)
+    const [showAllDetails, setShowAllDetails] = useState(() => {
+        const saved = localStorage.getItem('dashboard_showAllDetails');
+        return saved !== null ? JSON.parse(saved) : true;
+    });
+
+    // Save preference to localStorage when changed
+    React.useEffect(() => {
+        localStorage.setItem('dashboard_showAllDetails', JSON.stringify(showAllDetails));
+    }, [showAllDetails]);
 
     if (loading) {
         return <div className="p-8 text-center">Loading jobs...</div>;

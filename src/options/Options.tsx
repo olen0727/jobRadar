@@ -14,29 +14,39 @@ const OptionsContent: React.FC = () => {
     const { showToast, showConfirm } = useToast();
     const hasShownToast = React.useRef(false);
 
+    const handleNavigate = (newView: 'dashboard' | 'settings' | 'usage') => {
+        window.location.hash = newView;
+    };
+
     React.useEffect(() => {
+        const syncViewWithHash = () => {
+            const hash = window.location.hash.toLowerCase();
+            if (hash.includes('settings')) setView('settings');
+            else if (hash.includes('usage')) setView('usage');
+            else if (hash.includes('dashboard')) setView('dashboard');
+        };
+
+        syncViewWithHash(); // Initial sync
+
+        window.addEventListener('hashchange', syncViewWithHash);
+
+        // Modal reminder logic
         const hash = window.location.hash;
-        if (hash.includes('settings')) {
-            setView('settings');
-            if (hash.includes('remind=location') && !hasShownToast.current) {
-                hasShownToast.current = true;
-                setTimeout(() => {
-                    showConfirm(
-                        '完善個人資訊',
-                        '請填寫您的完整地址，讓路程計算更準確哦！',
-                        '立即填寫',
-                        () => {
-                            // Dispatch custom event to focus the input in Settings component
-                            window.dispatchEvent(new CustomEvent('focus-home-location'));
-                        }
-                    );
-                }, 800);
-            }
-        } else if (hash.includes('usage')) {
-            setView('usage');
-        } else if (hash.includes('dashboard')) {
-            setView('dashboard');
+        if (hash.includes('remind=location') && !hasShownToast.current) {
+            hasShownToast.current = true;
+            setTimeout(() => {
+                showConfirm(
+                    '完善個人資訊',
+                    '請填寫您的完整地址，讓路程計算更準確哦！',
+                    '立即填寫',
+                    () => {
+                        window.dispatchEvent(new CustomEvent('focus-home-location'));
+                    }
+                );
+            }, 800);
         }
+
+        return () => window.removeEventListener('hashchange', syncViewWithHash);
     }, [showConfirm]);
 
     return (
@@ -52,13 +62,13 @@ const OptionsContent: React.FC = () => {
 
             <div className="flex-1 max-w-6xl w-full mx-auto p-4 grid grid-cols-[200px_1fr] gap-6">
                 <aside className="space-y-2">
-                    <Button variant={view === 'dashboard' ? 'default' : 'ghost'} className="w-full justify-start" onClick={() => setView('dashboard')}>
+                    <Button variant={view === 'dashboard' ? 'default' : 'ghost'} className="w-full justify-start" onClick={() => handleNavigate('dashboard')}>
                         <LayoutDashboard className="w-4 h-4 mr-2" /> My Jobs
                     </Button>
-                    <Button variant={view === 'settings' ? 'default' : 'ghost'} className="w-full justify-start" onClick={() => setView('settings')}>
+                    <Button variant={view === 'settings' ? 'default' : 'ghost'} className="w-full justify-start" onClick={() => handleNavigate('settings')}>
                         <SettingsIcon className="w-4 h-4 mr-2" /> Settings
                     </Button>
-                    <Button variant={view === 'usage' ? 'default' : 'ghost'} className="w-full justify-start" onClick={() => setView('usage')}>
+                    <Button variant={view === 'usage' ? 'default' : 'ghost'} className="w-full justify-start" onClick={() => handleNavigate('usage')}>
                         <BarChart3 className="w-4 h-4 mr-2" /> Usage & Cost
                     </Button>
                 </aside>
