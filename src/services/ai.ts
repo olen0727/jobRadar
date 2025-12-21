@@ -7,9 +7,13 @@ import { storage } from './storage';
 const SUPABASE_TRIAL_URL = 'https://pabrserjlsgvqbzekbob.supabase.co/functions/v1/rapid-responder';
 
 export class QuotaExceededError extends Error {
-    constructor(message: string) {
+    quotaInfo?: { used: number; max: number };
+    constructor(message: string, quotaInfo?: { used: number; max: number }) {
         super(message);
         this.name = 'QuotaExceededError';
+        this.quotaInfo = quotaInfo;
+        // 確保原型鏈正確，以便在各處正確使用 instanceof
+        Object.setPrototypeOf(this, QuotaExceededError.prototype);
     }
 }
 
@@ -25,8 +29,34 @@ const callTrialAPI = async (payload: any): Promise<any> => {
 
         if (!response.ok) {
             const errorMsg = data.message || data.error || `Trial API Error: ${response.status} ${response.statusText}`;
-            if (errorMsg.includes('limit') || errorMsg.includes('quota') || errorMsg.includes('exceeded')) {
-                throw new QuotaExceededError(errorMsg);
+
+            // 增加更強健的判斷：包含 HTTP 429/403 或中英文關鍵字
+            const isQuotaError =
+                response.status === 429 ||
+                response.status === 403 ||
+                errorMsg.toLowerCase().includes('limit') ||
+                errorMsg.toLowerCase().includes('quota') ||
+                errorMsg.toLowerCase().includes('exceeded') ||
+                errorMsg.includes('上限') ||
+                errorMsg.includes('額度') ||
+                errorMsg.includes('次數');
+
+            if (isQuotaError) {
+                let used = data.used_count || data.used;
+                let max = data.limit_count || data.limit || data.max;
+
+                let quotaInfo = (typeof used === 'number' && typeof max === 'number') ? { used, max } : undefined;
+
+                // 如果 JSON 沒給數值，則嘗試從訊息文字中提取，例如 "(3 次)"
+                if (!quotaInfo) {
+                    const match = errorMsg.match(/\((\d+)\s*次\)/);
+                    if (match) {
+                        const maxVal = parseInt(match[1], 10);
+                        quotaInfo = { used: maxVal, max: maxVal };
+                    }
+                }
+
+                throw new QuotaExceededError(errorMsg, quotaInfo);
             }
             throw new Error(errorMsg);
         }

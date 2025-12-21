@@ -5,11 +5,10 @@ import type { ScrapedJobData } from './services/scraper';
 import { analyzeJob, parseResume } from './services/ai';
 import type { AnalysisResult, JobEntry, UserProfile } from './types';
 import { Button } from './components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from './components/ui/card';
+import { Card, CardContent } from './components/ui/card';
 import { Badge } from './components/ui/badge';
 import { Skeleton } from './components/ui/skeleton';
-import { AlertCircle, Briefcase, CheckCircle, Settings, ShieldAlert, Sparkles, XCircle, FileText, Search, ArrowLeft } from 'lucide-react';
-import { cn } from './lib/utils';
+import { Briefcase, CheckCircle, Settings, ShieldAlert, Sparkles, XCircle, FileText, Search } from 'lucide-react';
 import { v4 as uuidv4 } from 'uuid';
 
 type ViewMode = 'menu' | 'job' | 'resume' | 'detecting' | 'unknown' | 'trial_exceeded';
@@ -29,6 +28,9 @@ const PopupContent = () => {
   // Resume Flow State
   const [parsedProfile, setParsedProfile] = useState<UserProfile | null>(null);
   const [profileSaved, setProfileSaved] = useState(false);
+
+  // Quota Info State
+  const [quotaInfo, setQuotaInfo] = useState<{ used: number; max: number } | null>(null);
 
   const openDashboard = () => chrome.runtime.openOptionsPage();
 
@@ -78,6 +80,8 @@ const PopupContent = () => {
       setJobSaved(true);
     } catch (err) {
       if (err instanceof Error && err.name === 'QuotaExceededError') {
+        const qError = err as any;
+        if (qError.quotaInfo) setQuotaInfo(qError.quotaInfo);
         setMode('trial_exceeded');
       } else {
         setError(err instanceof Error ? err.message : 'Analysis failed');
@@ -106,6 +110,8 @@ const PopupContent = () => {
       setParsedProfile(newProfile);
     } catch (err) {
       if (err instanceof Error && err.name === 'QuotaExceededError') {
+        const qError = err as any;
+        if (qError.quotaInfo) setQuotaInfo(qError.quotaInfo);
         setMode('trial_exceeded');
       } else {
         setError(err instanceof Error ? err.message : 'Parsing failed');
@@ -221,195 +227,206 @@ const PopupContent = () => {
 
   if (contextLoading) return <div className="p-8 text-center">Loading context...</div>;
 
-  // VIEW: DETECTING
-  if (mode === 'detecting') {
-    return (
-      <div className="w-[400px] h-[500px] bg-background flex flex-col items-center justify-center p-6 gap-4">
-        <Sparkles className="w-12 h-12 text-primary animate-pulse" />
-        <h2 className="text-xl font-bold">偵測頁面中...</h2>
-        <p className="text-sm text-muted-foreground text-center">正在判斷此頁面為職缺描述或個人履歷</p>
-        <Skeleton className="h-4 w-3/4" />
-      </div>
-    );
-  }
-
-  // VIEW: UNKNOWN
-  if (mode === 'unknown') {
-    return (
-      <div className="w-[400px] h-[500px] bg-background flex flex-col p-6 gap-6">
-        <header className="flex justify-between items-center mb-4">
-          <div className="flex items-center gap-2 font-bold text-lg">
-            <Briefcase className="w-5 h-5" /> JobRadar AI
+  // --- 渲染內容分配器 ---
+  const renderContent = () => {
+    switch (mode) {
+      case 'detecting':
+        return (
+          <div className="flex flex-col items-center justify-center h-full gap-4 text-center">
+            <Sparkles className="w-12 h-12 text-primary animate-pulse" />
+            <h2 className="text-xl font-bold">偵測頁面中...</h2>
+            <p className="text-sm text-muted-foreground">正在判斷此頁面為職缺描述或個人履歷</p>
+            <Skeleton className="h-4 w-3/4" />
           </div>
-          <Button variant="ghost" size="icon" onClick={openDashboard} title="Settings"><Settings className="w-4 h-4" /></Button>
-        </header>
+        );
 
-        <div className="flex-1 flex flex-col items-center justify-center text-center gap-4">
-          <Search className="w-12 h-12 text-slate-300" />
-          <div>
-            <h3 className="font-bold text-lg text-slate-700">無法自動判別頁面</h3>
-            <p className="text-sm text-slate-500 mt-1 px-4">
-              此頁面看起來不像是典型的職缺或履歷。您可以嘗試手動選擇功能，或前往設定頁面調整。
-            </p>
-          </div>
-        </div>
-
-        <div className="space-y-3">
-          <Button className="w-full h-14 text-sm" variant="outline" onClick={startResumeParsing}>
-            <FileText className="w-5 h-5 mr-2" />
-            手動解析履歷 (Resume Parse)
-          </Button>
-          <Button className="w-full h-14 text-sm" onClick={startJobAnalysis}>
-            <Search className="w-5 h-5 mr-2" />
-            手動分析職缺 (Job Analyze)
-          </Button>
-        </div>
-      </div>
-    );
-  }
-
-  // VIEW: TRIAL EXCEEDED
-  if (mode === 'trial_exceeded') {
-    return (
-      <div className="w-[400px] h-[500px] bg-background flex flex-col p-6 items-center justify-center text-center gap-6">
-        <ShieldAlert className="w-16 h-16 text-destructive" />
-        <div className="space-y-2">
-          <h2 className="text-xl font-bold text-destructive">試用額度已用完</h2>
-          <p className="text-sm text-muted-foreground px-4">
-            您的試用額度已用完，請填寫您的 API Key 以繼續使用。
-            <br /><br />
-            本服務所有資訊皆儲存於您的本地端，不必擔心資料外洩。
-          </p>
-        </div>
-        <Button
-          className="w-full h-12"
-          onClick={() => {
-            chrome.tabs.create({ url: chrome.runtime.getURL('options.html#settings?quota=exceeded') });
-          }}
-        >
-          前往設定頁面
-        </Button>
-      </div>
-    );
-  }
-
-  // VIEW: JOB ANALYSIS
-  if (mode === 'job') {
-    return (
-      <div className="w-[400px] min-h-[500px] bg-background text-foreground flex flex-col">
-        <header className="p-3 border-b flex items-center gap-2 bg-muted/30">
-          <Button variant="ghost" size="icon" onClick={() => setMode('unknown')}><ArrowLeft className="w-4 h-4" /></Button>
-          <span className="font-bold">職缺分析 (Job Analysis)</span>
-        </header>
-        <main className="p-4 space-y-4 flex-1 overflow-auto">
-          {loading ? (
-            <AnalysisLoader type="job" />
-          ) : error ? (
-            <div className="p-4 bg-destructive/10 text-destructive rounded text-center">
-              <XCircle className="w-8 h-8 mx-auto mb-2" />
-              {error}
+      case 'unknown':
+        return (
+          <div className="flex flex-col items-center justify-center h-full text-center gap-6">
+            <Search className="w-12 h-12 text-slate-300" />
+            <div>
+              <h3 className="font-bold text-lg text-slate-700">無法自動判別頁面</h3>
+              <p className="text-sm text-slate-500 mt-1 px-4">
+                此頁面看起來不像是典型的職缺或履歷。您可以嘗試手動選擇功能，或前往設定頁面調整。
+              </p>
             </div>
-          ) : analysis && jobData ? (
-            <>
-              <div>
-                <h2 className="font-bold text-lg leading-tight line-clamp-2">{jobData.title}</h2>
-                <p className="text-sm text-muted-foreground">{jobData.company}</p>
-              </div>
+            <div className="space-y-3 w-full px-4">
+              <Button className="w-full h-14 text-sm" variant="outline" onClick={startResumeParsing}>
+                <FileText className="w-5 h-5 mr-2" />
+                手動解析履歷 (Resume Parse)
+              </Button>
+              <Button className="w-full h-14 text-sm" onClick={startJobAnalysis}>
+                <Search className="w-5 h-5 mr-2" />
+                手動分析職缺 (Job Analyze)
+              </Button>
+            </div>
+          </div>
+        );
 
-              <div className="flex gap-2">
-                <Badge variant={analysis.matchScore > 75 ? "default" : "secondary"}>Match: {analysis.matchScore}%</Badge>
-                <Badge variant="outline">Risk: {analysis.riskAnalysis.level}</Badge>
-                {analysis.commuteLabel && (
-                  <Badge variant={
-                    analysis.commuteLabel === "你家旁邊" || analysis.commuteLabel === "舒適距離" ? "default" :
-                      analysis.commuteLabel === "舟車勞頓" || analysis.commuteLabel === "極限通勤" ? "destructive" : "secondary"
-                  }>
-                    {analysis.commuteLabel}
-                  </Badge>
-                )}
-              </div>
-              {analysis.matchScoreExplanation && analysis.matchScoreExplanation.length > 0 && (
-                <div className="text-xs text-muted-foreground mt-2 bg-muted/40 p-2 rounded">
-                  <span className="font-semibold block mb-1">Score Reason:</span>
-                  <ul className="list-disc list-inside space-y-0.5">
-                    {analysis.matchScoreExplanation.map((reason, i) => (
-                      <li key={i}>{reason}</li>
-                    ))}
-                  </ul>
-                </div>
+      case 'trial_exceeded':
+        return (
+          <div className="flex flex-col items-center justify-center h-full text-center gap-6">
+            <ShieldAlert className="w-16 h-16 text-destructive" />
+            <div className="space-y-2">
+              <h2 className="text-xl font-bold text-destructive">試用額度已用完</h2>
+              {quotaInfo && (
+                <Badge variant="outline" className="mb-2">
+                  {/* 已使用 {quotaInfo.used} / */}上限 {quotaInfo.max} 次
+                </Badge>
               )}
-              {analysis.commuteDescription && <p className="text-xs text-muted-foreground mt-1">Commute: {analysis.commuteDescription}</p>}
-
-              <Card className="bg-primary/5 border-primary/20">
-                <CardContent className="p-3 text-sm">{analysis.strategicAdvice}</CardContent>
-              </Card>
-
-              <div className="flex gap-2 w-full">
-                <Button className="flex-1" variant="outline" onClick={handleDeleteAnalysis} disabled={!jobSaved}>
-                  <XCircle className="mr-2 w-4 h-4" /> 刪除分析
-                </Button>
-                <Button className="flex-[2]" onClick={goToDashboard}>
-                  <Search className="mr-2 w-4 h-4" /> 前往列表
-                </Button>
-              </div>
-            </>
-          ) : null}
-        </main>
-      </div>
-    );
-  }
-
-  // VIEW: RESUME PARSING
-  return (
-    <div className="w-[400px] min-h-[500px] bg-background text-foreground flex flex-col">
-      <header className="p-3 border-b flex items-center gap-2 bg-muted/30">
-        <Button variant="ghost" size="icon" onClick={() => setMode('unknown')}><ArrowLeft className="w-4 h-4" /></Button>
-        <span className="font-bold">履歷解析 (Resume Parse)</span>
-      </header>
-      <main className="p-4 space-y-4 flex-1 overflow-auto">
-        {loading ? (
-          <AnalysisLoader type="resume" />
-        ) : error ? (
-          <div className="p-4 bg-destructive/10 text-destructive rounded text-center">
-            <XCircle className="w-8 h-8 mx-auto mb-2" />
-            {error}
-          </div>
-        ) : parsedProfile ? (
-          <div className="space-y-4">
-            <div className="text-center">
-              <h2 className="font-bold text-xl">{parsedProfile.name}</h2>
-              <p className="text-muted-foreground">{parsedProfile.targetRole}</p>
+              <p className="text-sm text-muted-foreground px-4">
+                試用額度已用完，請填寫您的API Key以繼續使用
+                <br />
+                所有資訊皆儲存於您的本地端，不必擔心資料外洩
+              </p>
             </div>
-
-            <div className="grid grid-cols-2 gap-2 text-sm">
-              <div className="p-2 border rounded">
-                <span className="block text-xs text-muted-foreground">Exp</span>
-                <span className="font-bold">{parsedProfile.yearsOfExperience} yrs</span>
-              </div>
-              <div className="p-2 border rounded">
-                <span className="block text-xs text-muted-foreground">Location</span>
-                <span className="font-bold truncate">{parsedProfile.homeLocation || '-'}</span>
-              </div>
-            </div>
-
-            <div className="space-y-1">
-              <span className="text-xs font-bold text-muted-foreground">Skills</span>
-              <div className="flex flex-wrap gap-1">
-                {parsedProfile.skills.slice(0, 5).map(s => <Badge key={s} variant="secondary" className="text-[10px]">{s}</Badge>)}
-              </div>
-            </div>
-
-            <div className="space-y-1">
-              <span className="text-xs font-bold text-muted-foreground">Work Experience (Summary)</span>
-              <p className="text-xs p-2 bg-muted/30 rounded line-clamp-4">{parsedProfile.experience}</p>
-            </div>
-
-            <Button className="w-full" onClick={handleUpdateProfile} disabled={profileSaved}>
-              {profileSaved ? <><CheckCircle className="mr-2 w-4 h4" /> Profile Updated</> : "更新並前往設定頁"}
+            <Button
+              className="w-full h-12"
+              onClick={() => {
+                chrome.tabs.create({ url: chrome.runtime.getURL('options.html#settings?quota=exceeded') });
+              }}
+            >
+              前往設定頁面
             </Button>
-            {profileSaved && <p className="text-xs text-center text-green-600">Settings updated successfully!</p>}
           </div>
-        ) : null}
+        );
+
+      case 'job':
+        return (
+          <div className="space-y-4">
+            {loading ? (
+              <AnalysisLoader type="job" />
+            ) : error ? (
+              <div className="p-4 bg-destructive/10 text-destructive rounded text-center">
+                <XCircle className="w-8 h-8 mx-auto mb-2" />
+                {error}
+              </div>
+            ) : analysis && jobData ? (
+              <>
+                <div>
+                  <h2 className="font-bold text-lg leading-tight line-clamp-2">{jobData.title}</h2>
+                  <p className="text-sm text-muted-foreground">{jobData.company}</p>
+                </div>
+
+                <div className="flex gap-2">
+                  <Badge variant={analysis.matchScore > 75 ? "default" : "secondary"}>Match: {analysis.matchScore}%</Badge>
+                  <Badge variant="outline">Risk: {analysis.riskAnalysis.level}</Badge>
+                  {analysis.commuteLabel && (
+                    <Badge variant={
+                      analysis.commuteLabel === "你家旁邊" || analysis.commuteLabel === "舒適距離" ? "default" :
+                        analysis.commuteLabel === "舟車勞頓" || analysis.commuteLabel === "極限通勤" ? "destructive" : "secondary"
+                    }>
+                      {analysis.commuteLabel}
+                    </Badge>
+                  )}
+                </div>
+                {analysis.matchScoreExplanation && analysis.matchScoreExplanation.length > 0 && (
+                  <div className="text-xs text-muted-foreground mt-2 bg-muted/40 p-2 rounded">
+                    <span className="font-semibold block mb-1">Score Reason:</span>
+                    <ul className="list-disc list-inside space-y-0.5">
+                      {analysis.matchScoreExplanation.map((reason, i) => (
+                        <li key={i}>{reason}</li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+                {analysis.commuteDescription && <p className="text-xs text-muted-foreground mt-1">Commute: {analysis.commuteDescription}</p>}
+
+                <Card className="bg-primary/5 border-primary/20">
+                  <CardContent className="p-3 text-sm">{analysis.strategicAdvice}</CardContent>
+                </Card>
+
+                <div className="flex gap-2 w-full pt-2">
+                  <Button className="flex-1" variant="outline" onClick={handleDeleteAnalysis} disabled={!jobSaved}>
+                    <XCircle className="mr-1 w-4 h-4" /> 捨棄
+                  </Button>
+                  <Button className="flex-[2]" onClick={goToDashboard}>
+                    <Search className="mr-1 w-4 h-4" /> 前往列表
+                  </Button>
+                </div>
+              </>
+            ) : null}
+          </div>
+        );
+
+      case 'resume':
+        return (
+          <div className="space-y-4">
+            {loading ? (
+              <AnalysisLoader type="resume" />
+            ) : error ? (
+              <div className="p-4 bg-destructive/10 text-destructive rounded text-center">
+                <XCircle className="w-8 h-8 mx-auto mb-2" />
+                {error}
+              </div>
+            ) : parsedProfile ? (
+              <div className="space-y-4">
+                <div className="text-center">
+                  <h2 className="font-bold text-xl">{parsedProfile.name}</h2>
+                  <p className="text-muted-foreground">{parsedProfile.targetRole}</p>
+                </div>
+
+                <div className="grid grid-cols-2 gap-2 text-sm">
+                  <div className="p-2 border rounded">
+                    <span className="block text-xs text-muted-foreground">Exp</span>
+                    <span className="font-bold">{parsedProfile.yearsOfExperience} yrs</span>
+                  </div>
+                  <div className="p-2 border rounded">
+                    <span className="block text-xs text-muted-foreground">Location</span>
+                    <span className="font-bold truncate">{parsedProfile.homeLocation || '-'}</span>
+                  </div>
+                </div>
+
+                <div className="space-y-1">
+                  <span className="text-xs font-bold text-muted-foreground">Skills</span>
+                  <div className="flex flex-wrap gap-1">
+                    {parsedProfile.skills.slice(0, 5).map(s => <Badge key={s} variant="secondary" className="text-[10px]">{s}</Badge>)}
+                  </div>
+                </div>
+
+                <div className="space-y-1">
+                  <span className="text-xs font-bold text-muted-foreground">Work Experience (Summary)</span>
+                  <p className="text-xs p-2 bg-muted/30 rounded line-clamp-4">{parsedProfile.experience}</p>
+                </div>
+
+                <Button className="w-full" onClick={handleUpdateProfile} disabled={profileSaved}>
+                  {profileSaved ? <><CheckCircle className="mr-2 w-4 h4" />已更新</> : "更新並前往設定頁"}
+                </Button>
+                {profileSaved && <p className="text-xs text-center text-green-600">Settings updated successfully!</p>}
+              </div>
+            ) : null}
+          </div>
+        );
+
+      default:
+        return null;
+    }
+  };
+
+  return (
+    <div className="w-[400px] h-[500px] bg-background text-foreground flex flex-col overflow-hidden">
+      {/* 統一共有 Header */}
+      <header className="p-3 border-b flex items-center justify-between bg-muted/30 h-14 shrink-0 px-4">
+        <div className="flex items-center gap-2 font-bold text-lg">
+          <Briefcase className="w-5 h-5 text-primary" /> JobRadar
+        </div>
+        <div>
+          {!loading && !analysis && !parsedProfile && (
+            <Button variant="ghost" size="icon" onClick={openDashboard} title="Settings">
+              <Settings className="w-4 h-4" />
+            </Button>
+          )}
+          {(analysis || parsedProfile) && (
+            <Button variant="ghost" size="icon" onClick={openDashboard} title="Settings">
+              <Settings className="w-4 h-4" />
+            </Button>
+          )}
+        </div>
+      </header>
+
+      {/* 統一共有 Main 容器 */}
+      <main className="flex-1 overflow-y-auto p-4 custom-scrollbar">
+        {renderContent()}
       </main>
     </div>
   );
