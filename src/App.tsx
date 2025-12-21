@@ -280,14 +280,6 @@ const PopupContent = () => {
                 所有資訊皆儲存於您的本地端，不必擔心資料外洩
               </p>
             </div>
-            <Button
-              className="w-full h-12"
-              onClick={() => {
-                chrome.tabs.create({ url: chrome.runtime.getURL('options.html#settings?quota=exceeded') });
-              }}
-            >
-              前往設定頁面
-            </Button>
           </div>
         );
 
@@ -335,15 +327,6 @@ const PopupContent = () => {
                 <Card className="bg-primary/5 border-primary/20">
                   <CardContent className="p-3 text-sm">{analysis.strategicAdvice}</CardContent>
                 </Card>
-
-                <div className="flex gap-2 w-full pt-2">
-                  <Button className="flex-1" variant="outline" onClick={handleDeleteAnalysis} disabled={!jobSaved}>
-                    <XCircle className="mr-1 w-4 h-4" /> 捨棄
-                  </Button>
-                  <Button className="flex-[2]" onClick={goToDashboard}>
-                    <Search className="mr-1 w-4 h-4" /> 前往列表
-                  </Button>
-                </div>
               </>
             ) : null}
           </div>
@@ -388,14 +371,58 @@ const PopupContent = () => {
                   <span className="text-xs font-bold text-muted-foreground">Work Experience (Summary)</span>
                   <p className="text-xs p-2 bg-muted/30 rounded line-clamp-4">{parsedProfile.experience}</p>
                 </div>
-
-                <Button className="w-full" onClick={handleUpdateProfile} disabled={profileSaved}>
-                  {profileSaved ? <><CheckCircle className="mr-2 w-4 h4" />已更新</> : "更新並前往設定頁"}
-                </Button>
-                {profileSaved && <p className="text-xs text-center text-green-600">Settings updated successfully!</p>}
               </div>
             ) : null}
           </div>
+        );
+
+      default:
+        return null;
+    }
+  };
+
+  const renderFooter = () => {
+    if (loading) return null;
+
+    switch (mode) {
+      case 'job':
+        if (analysis && jobData) {
+          return (
+            <div className="flex gap-2 w-full">
+              <Button className="flex-1" variant="outline" onClick={handleDeleteAnalysis} disabled={!jobSaved}>
+                <XCircle className="mr-1 w-4 h-4" /> 捨棄
+              </Button>
+              <Button className="flex-[2]" onClick={goToDashboard}>
+                <Search className="mr-1 w-4 h-4" /> 前往列表
+              </Button>
+            </div>
+          );
+        }
+        return null;
+
+      case 'resume':
+        if (parsedProfile) {
+          return (
+            <div className="w-full">
+              <Button className="w-full" onClick={handleUpdateProfile} disabled={profileSaved}>
+                {profileSaved ? <><CheckCircle className="mr-2 w-4 h4" />已更新</> : "更新並前往設定頁"}
+              </Button>
+              {profileSaved && <p className="text-xs text-center text-green-600 mt-2">Settings updated successfully!</p>}
+            </div>
+          );
+        }
+        return null;
+
+      case 'trial_exceeded':
+        return (
+          <Button
+            className="w-full h-12"
+            onClick={() => {
+              chrome.tabs.create({ url: chrome.runtime.getURL('options.html#settings?quota=exceeded') });
+            }}
+          >
+            前往設定頁面
+          </Button>
         );
 
       default:
@@ -428,6 +455,11 @@ const PopupContent = () => {
       <main className="flex-1 overflow-y-auto p-4 custom-scrollbar">
         {renderContent()}
       </main>
+
+      {/* 統一共有 Footer 容器 */}
+      <footer className="ps-4 pe-4 pb-4 shrink-0 bg-background">
+        {renderFooter()}
+      </footer>
     </div>
   );
 };

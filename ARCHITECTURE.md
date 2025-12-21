@@ -65,9 +65,12 @@
 ### 3.1. Chrome Extension 前端
 **技術棧**: React 18 + Vite + Tailwind CSS，直接渲染在 Chrome Popup 或 Options 頁面中。
 **職責**:
-- **Popup (`App.tsx`)**: 快速選單，提供「履歷解析」與「職缺分析」功能，並顯示即時的 AI 分析結果。
+- **Popup (`App.tsx`)**: 快速選單，提供「履歷解析」與「職缺分析」功能，採用統一的 Header/Main/Footer 佈局。
+    - **Unified UI Layout**: 共享同一個 Header (標題固定為 JobRadar) 與 Main 內容區。
+    - **Fixed Footer CTA**: 關鍵操作按鈕 (除 Unknown 模式外) 統一固定於底部，不隨內容滾動。
     - **Commute Badge**: 自動根據使用者位置與職缺地點估算通勤時間並分類 (如「你家旁邊」、「舒適距離」等)。
     - **Score Reasoning**: 顯示 AI 給出該契合度分數的具體理由 (2-3 點)。
+    - **Quota View**: 當試用額度用完時，自動切換至 `trial_exceeded` 視圖並顯示具體次數 (已使用 / 上限)。
     - **結果保存**: 可將分析結果「存入 Dashboard」。
 - **SidePanel (`SidePanel.tsx`)**: 寬螢幕專用的矩陣視窗 (Matrix View)。
     - **8-Row Layout**: 包含 8 行核心資訊，詳細說明 (分數/風險/通勤) 收納於動態 Tooltip。
@@ -93,8 +96,7 @@
 - `user_profile`: `UserProfile` (含 Model config, Keys)。
 - `saved_jobs`: `JobEntry[]` (職缺清單，分析結果包含 `AnalysisResult` 結構)。
 - `usage_logs`: `UsageLog[]` (API 使用與費用歷史記錄)。
-- `trial_usage`: `TrialUsage` (本地快取之已使用次數)。
-- `anonymous_id`: UUID (用於試用配額識別)。
+- `anonymous_id`: UUID (用於試用配額識別與雲端同步)。
 
 ### 4.2. Supabase (Cloud Persistence)
 **類型**: Supabase PostgreSQL / Edge Functions。
@@ -159,4 +161,4 @@
 **專案名稱**: JobRadar AI
 **Repository URL**: Local
 **主要聯絡人**: Olen
-**最後更新日期**: 2025-12-20
+**最後更新日期**: 2025-12-21
