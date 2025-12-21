@@ -12,7 +12,7 @@ import { UsageStats } from '../options/UsageStats';
 
 const Tooltip: React.FC<{ title: string; children: React.ReactNode; content: React.ReactNode }> = ({ children, content }) => {
     return (
-        <div className="group relative inline-block">
+        <div className="group relative w-full text-center">
             {children}
             <div className="invisible group-hover:visible opacity-0 group-hover:opacity-100 transition-all duration-200 absolute z-50 bottom-full left-1/2 -translate-x-1/2 mb-2 w-64 p-3 bg-slate-800 text-white text-[11px] rounded-lg shadow-xl pointer-events-none border border-slate-700">
                 <div className="font-bold border-b border-slate-700 pb-1.5 mb-1.5 flex items-center justify-between">
@@ -91,34 +91,34 @@ const MatrixView: React.FC = () => {
         <div className="flex-1 overflow-auto bg-muted/20 relative font-sans">
             <div className="flex min-w-max">
                 {/* 1. Left Header Column (Sticky) */}
-                <div className="sticky left-0 z-20 bg-background border-r shadow-sm w-36 flex-shrink-0 flex flex-col">
+                <div className="sticky left-0 z-20 bg-background border-r shadow-sm flex-shrink-0 flex flex-col">
 
                     <div className="h-12 border-b p-2 text-xs font-bold flex items-center text-slate-700 bg-slate-50/50">職缺名稱</div>
                     <div className="h-12 border-b p-2 text-xs font-bold flex items-center text-slate-700">公司名稱</div>
-                    <div className="h-12 border-b p-2 text-xs font-bold flex items-center text-slate-700 bg-slate-50/50">公司地址</div>
+                    <div className="h-12 border-b p-2 text-xs font-bold flex items-center text-slate-700">公司地址</div>
                     <div className="h-14 border-b p-2 text-xs font-bold flex items-center text-slate-700">狀態Status</div>
-                    <div className="h-20 border-b p-2 text-xs font-bold flex items-center text-slate-700 bg-slate-50/50">交通指標 ⓘ</div>
-                    <div className="h-20 border-b p-2 text-xs font-bold flex items-center text-slate-700">風險 ⓘ</div>
-                    <div className="h-20 border-b p-2 text-xs font-bold flex items-center text-slate-700 bg-slate-50/50">契合度 ⓘ</div>
+                    <div className="h-14 border-b p-2 text-xs font-bold flex items-center text-slate-700">交通指標 ⓘ</div>
+                    <div className="h-14 border-b p-2 text-xs font-bold flex items-center text-slate-700">風險 ⓘ</div>
+                    <div className="h-14 border-b p-2 text-xs font-bold flex items-center text-slate-700">契合度 ⓘ</div>
 
-                    <div className="flex-1 border-b p-2 text-xs font-bold flex items-center text-slate-700 bg-slate-900 text-slate-400">AI策略建議</div>
+                    <div className="flex-1 border-b p-2 text-xs font-bold flex items-center text-slate-500">AI策略建議</div>
                 </div>
 
                 {/* 2. Job Columns */}
                 {sortedJobs.map((job) => (
-                    <div key={job.id} className="w-64 border-r flex-shrink-0 flex flex-col bg-background transition-colors hover:bg-muted/5">
+                    <div key={job.id} className="w-48 border-r flex-shrink-0 flex flex-col bg-background transition-colors hover:bg-muted/5">
 
                         <div className="h-12 border-b p-2 flex items-center bg-slate-50/50 overflow-hidden">
-                            <a href={job.url} target="_blank" rel="noreferrer" className="font-bold text-[11px] leading-tight hover:underline line-clamp-2 text-primary" title={job.title}>
+                            <a href={job.url} target="_blank" rel="noreferrer" className="font-bold text-[12px] leading-tight hover:underline line-clamp-2 text-primary" title={job.title}>
                                 {job.title}
                             </a>
                         </div>
 
-                        <div className="h-12 border-b p-2 flex items-center text-[11px] font-medium text-slate-700 overflow-hidden">
+                        <div className="h-12 border-b p-2 flex items-center text-[12px] font-medium text-slate-700 overflow-hidden">
                             <span className="truncate" title={job.company}>{job.company}</span>
                         </div>
 
-                        <div className="h-12 border-b p-2 flex items-center text-[10px] text-slate-500 bg-slate-50/50 overflow-hidden">
+                        <div className="h-12 border-b p-2 flex items-center text-[12px] text-slate-500 overflow-hidden">
                             <span className="line-clamp-2" title={job.location || job.analysis?.commuteLabel}>{job.location || '未知地址'}</span>
                         </div>
 
@@ -142,20 +142,20 @@ const MatrixView: React.FC = () => {
 
 
                         {/* 交通指標 & Tooltip (Dashboard Style) */}
-                        <div className="h-20 border-b p-2 flex items-center justify-center bg-slate-50/50">
+                        <div className="h-14 border-b p-2 flex items-center justify-center">
                             <Tooltip title="通勤細節" content={
                                 <p className="italic leading-normal text-white">
                                     {job.analysis?.commuteDescription || '無詳細資訊'}
                                 </p>
                             }>
-                                <div className={cn("p-2 rounded-lg border transition-all cursor-help border-dashed w-32 flex flex-col items-center shadow-sm", getCommuteStyles(job.analysis?.commuteLabel || ''))}>
+                                <div className={cn("p-2 rounded-lg border transition-all cursor-help border-dashed w-full flex flex-col items-center shadow-sm", getCommuteStyles(job.analysis?.commuteLabel || ''))}>
 
                                     <span className="text-sm font-black line-clamp-1">{job.analysis?.commuteLabel || '未知'}</span>
                                 </div>
                             </Tooltip>
                         </div>
                         {/* 風險 & Tooltip (Dashboard Style) */}
-                        <div className="h-20 border-b p-2 flex items-center justify-center">
+                        <div className="h-14 border-b p-2 flex items-center justify-center">
                             <Tooltip title="風險標記" content={
                                 <ul className="list-disc list-inside space-y-1 text-rose-300">
                                     {Array.isArray(job.analysis?.riskAnalysis?.flags) && job.analysis.riskAnalysis.flags.length > 0 ? (
@@ -167,14 +167,14 @@ const MatrixView: React.FC = () => {
                                     )}
                                 </ul>
                             }>
-                                <div className={cn("p-2 rounded-lg border transition-all cursor-help border-dashed w-32 flex flex-col items-center", getRiskStyles(job.analysis?.riskAnalysis?.level || ''))}>
+                                <div className={cn("p-2 rounded-lg border transition-all cursor-help border-dashed w-full flex flex-col items-center", getRiskStyles(job.analysis?.riskAnalysis?.level || ''))}>
 
                                     <span className="text-sm font-black capitalize line-clamp-1">{job.analysis?.riskAnalysis?.level || '未知'}</span>
                                 </div>
                             </Tooltip>
                         </div>
                         {/* 契合度 & Tooltip (Dashboard Style) */}
-                        <div className="h-20 border-b p-2 flex items-center justify-center bg-slate-50/50">
+                        <div className="h-14 border-b p-2 flex items-center justify-center">
                             <Tooltip title="分數說明" content={
                                 <ul className="list-disc list-inside space-y-1">
                                     {Array.isArray(job.analysis?.matchScoreExplanation) && job.analysis.matchScoreExplanation.length > 0 ? (
@@ -186,7 +186,7 @@ const MatrixView: React.FC = () => {
                                     )}
                                 </ul>
                             }>
-                                <div className={cn("p-2 rounded-lg border transition-all cursor-help border-dashed w-32 flex flex-col items-center", getScoreStyles(job.analysis?.matchScore || 0))}>
+                                <div className={cn("p-2 rounded-lg border transition-all cursor-help border-dashed w-full flex flex-col items-center", getScoreStyles(job.analysis?.matchScore || 0))}>
 
                                     <span className="text-sm font-black">{job.analysis?.matchScore || 0}%</span>
                                 </div>
@@ -195,12 +195,8 @@ const MatrixView: React.FC = () => {
 
 
                         {/* AI策略建議 */}
-                        <div className="flex-1 border-b p-3 bg-slate-900 flex flex-col justify-center min-h-[120px]">
-                            <div className="flex items-center gap-1.5 mb-1.5">
-                                <div className="w-1 h-1 rounded-full bg-emerald-500 animate-pulse" />
-                                <span className="text-[9px] uppercase tracking-widest font-black text-slate-500">ASAP Strategy</span>
-                            </div>
-                            <p className="text-slate-200 text-[11px] leading-relaxed italic font-medium">
+                        <div className="flex-1 border-b p-3 flex flex-col justify-center min-h-[120px]">
+                            <p className="text-white text-[12px] leading-relaxed italic font-medium bg-[#333] p-2.5 rounded-lg shadow-md">
                                 "{job.analysis?.strategicAdvice || '無特定建議'}"
                             </p>
                         </div>

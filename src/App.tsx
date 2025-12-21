@@ -157,6 +157,7 @@ const PopupContent = () => {
       setAnalysis(null);
       setJobData(null);
       setMode('unknown');
+      window.close(); // 捨棄後自動關閉視窗
     }
   };
 

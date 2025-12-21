@@ -85,7 +85,7 @@
 - `scraper.ts`: 注入到當前分頁中，用於提取文字內容 (JD 或履歷)。處理特定平台的邏輯 (104, Yourator, LinkedIn)。
 - `ai.ts`: AI 路由中樞。判斷使用自有 Key (OpenAI/Gemini) 或轉發至 Supabase (試用模式)。
 - `openai.ts` / `gemini.ts`: 無狀態 (Stateless) 的 API 客戶端。負責發送 Prompt (含詳細的 Prompt Constraint 與輸出格式要求) 並透過 `utils/pricing.ts` 計算成本後寫入 Log。
-- `storage.ts`: `chrome.storage.local` 的包裝器，處理所有持久化資料的存取。
+- `storage.ts`: `chrome.storage.local` 的包裝器，處理所有持久化資料的存取。透過 `chrome.storage.onChanged` 實現跨頁面 (Popup/SidePanel/Options) 即時資料同步。
 
 ## 4. 資料存儲 (Data Stores)
 

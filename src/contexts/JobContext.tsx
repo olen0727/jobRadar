@@ -23,6 +23,17 @@ export const JobProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
     useEffect(() => {
         loadData();
+
+        // 監聽儲存空間變動，實現跨頁面 (Popup, SidePanel, Options) 同步
+        const handleStorageChange = (changes: { [key: string]: chrome.storage.StorageChange }) => {
+            if (changes.saved_jobs || changes.user_profile) {
+                console.log('Storage changed, refreshing context data...');
+                loadData();
+            }
+        };
+
+        chrome.storage.onChanged.addListener(handleStorageChange);
+        return () => chrome.storage.onChanged.removeListener(handleStorageChange);
     }, []);
 
     const loadData = async () => {
