@@ -24,7 +24,11 @@ const callTrialAPI = async (payload: any): Promise<any> => {
         let data = await response.json().catch(() => ({}));
 
         if (!response.ok) {
-            throw new Error(data.message || data.error || `Trial API Error: ${response.status} ${response.statusText}`);
+            const errorMsg = data.message || data.error || `Trial API Error: ${response.status} ${response.statusText}`;
+            if (errorMsg.includes('limit') || errorMsg.includes('quota') || errorMsg.includes('exceeded')) {
+                throw new QuotaExceededError(errorMsg);
+            }
+            throw new Error(errorMsg);
         }
 
         // 如果後端回傳的是字串，則再 parse 一次 (備案代碼有時會多包一層)
@@ -48,11 +52,6 @@ export const analyzeJob = async (job: ScrapedJobData, profile: UserProfile): Pro
     const hasKey = profile.apiKey || profile.geminiApiKey;
 
     if (!hasKey) {
-        const trial = await storage.getTrialUsage();
-        if (trial.jobCount >= 10) {
-            throw new QuotaExceededError('JOB_TRIAL_EXCEEDED');
-        }
-
         // Use Trial API via Supabase
         const anonymousId = await storage.getAnonymousId();
         const result = await callTrialAPI({
@@ -64,7 +63,6 @@ export const analyzeJob = async (job: ScrapedJobData, profile: UserProfile): Pro
         const analysisResult = result as AnalysisResult;
         analysisResult.aiModel = 'gpt-5-mini (Trial)'; // Trial default
 
-        await storage.incrementTrialCount('job');
         return analysisResult;
     }
 
@@ -82,11 +80,6 @@ export const parseResume = async (text: string, profile: UserProfile): Promise<U
     const hasKey = profile.apiKey || profile.geminiApiKey;
 
     if (!hasKey) {
-        const trial = await storage.getTrialUsage();
-        if (trial.resumeCount >= 3) {
-            throw new QuotaExceededError('RESUME_TRIAL_EXCEEDED');
-        }
-
         // Use Trial API via Supabase
         const anonymousId = await storage.getAnonymousId();
         const result = await callTrialAPI({
@@ -94,8 +87,6 @@ export const parseResume = async (text: string, profile: UserProfile): Promise<U
             profile: { ...profile, anonymousId },
             systemPrompt: RESUME_SYSTEM_PROMPT
         });
-
-        await storage.incrementTrialCount('resume');
 
         // Hydrate result to UserProfile
         return {

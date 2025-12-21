@@ -289,7 +289,6 @@ const PopupContent = () => {
         >
           前往設定頁面
         </Button>
-        <Button variant="ghost" className="text-xs text-muted-foreground" onClick={() => setMode('unknown')}>手動選擇功能</Button>
       </div>
     );
   }
@@ -378,9 +377,6 @@ const PopupContent = () => {
         ) : parsedProfile ? (
           <div className="space-y-4">
             <div className="text-center">
-              <div className="w-20 h-20 bg-muted rounded-full mx-auto flex items-center justify-center mb-2">
-                <FileText className="w-10 h-10 text-muted-foreground" />
-              </div>
               <h2 className="font-bold text-xl">{parsedProfile.name}</h2>
               <p className="text-muted-foreground">{parsedProfile.targetRole}</p>
             </div>

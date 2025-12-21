@@ -1,15 +1,10 @@
 import type { UserProfile, JobEntry, UsageLog } from '../types';
 
-interface TrialUsage {
-    resumeCount: number;
-    jobCount: number;
-}
 
 interface StorageSchema {
     user_profile: UserProfile;
     saved_jobs: JobEntry[];
     usage_logs: UsageLog[];
-    trial_usage: TrialUsage;
     anonymous_id: string;
 }
 
@@ -50,29 +45,12 @@ export const storage = {
         return result.saved_jobs || [];
     },
 
-    // Trial Usage Helpers
-    getTrialUsage: async (): Promise<TrialUsage> => {
-        const result = await storage.get('trial_usage');
-        return result.trial_usage || { resumeCount: 0, jobCount: 0 };
-    },
-
-    incrementTrialCount: async (type: 'resume' | 'job'): Promise<TrialUsage> => {
-        const usage = await storage.getTrialUsage();
-        const updatedUsage = {
-            ...usage,
-            resumeCount: type === 'resume' ? usage.resumeCount + 1 : usage.resumeCount,
-            jobCount: type === 'job' ? usage.jobCount + 1 : usage.jobCount
-        };
-        await storage.set({ trial_usage: updatedUsage });
-        return updatedUsage;
-    },
-
     getAnonymousId: async (): Promise<string> => {
-        const result = await storage.get('anonymous_id' as any);
-        let id = (result as any).anonymous_id;
+        const result = await storage.get('anonymous_id');
+        let id = result.anonymous_id;
         if (!id) {
             id = crypto.randomUUID();
-            await storage.set({ ['anonymous_id' as any]: id } as any);
+            await storage.set({ anonymous_id: id });
         }
         return id;
     },
