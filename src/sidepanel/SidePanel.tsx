@@ -196,7 +196,7 @@ const MatrixView: React.FC = () => {
 
                         {/* AI策略建議 */}
                         <div className="flex-1 border-b p-3 flex flex-col justify-center min-h-[120px]">
-                            <p className="text-white text-[12px] leading-relaxed italic font-medium bg-[#333] p-2.5 rounded-lg shadow-md">
+                            <p className="text-white text-[12px] h-full leading-relaxed font-medium bg-[#333] p-2.5 rounded-lg shadow-md">
                                 "{job.analysis?.strategicAdvice || '無特定建議'}"
                             </p>
                         </div>
