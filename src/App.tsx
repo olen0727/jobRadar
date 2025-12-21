@@ -15,7 +15,7 @@ import { v4 as uuidv4 } from 'uuid';
 type ViewMode = 'menu' | 'job' | 'resume' | 'detecting' | 'unknown' | 'trial_exceeded';
 
 const PopupContent = () => {
-  const { userProfile, saveProfile, loading: contextLoading, addJob } = useJobContext();
+  const { userProfile, saveProfile, loading: contextLoading, addJob, deleteJob } = useJobContext();
   const [mode, setMode] = useState<ViewMode>('detecting');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -23,6 +23,7 @@ const PopupContent = () => {
   // Job Flow State
   const [jobData, setJobData] = useState<ScrapedJobData | null>(null);
   const [analysis, setAnalysis] = useState<AnalysisResult | null>(null);
+  const [savedJobId, setSavedJobId] = useState<string | null>(null);
   const [jobSaved, setJobSaved] = useState(false);
 
   // Resume Flow State
@@ -57,6 +58,24 @@ const PopupContent = () => {
 
       const aiResult = await analyzeJob(result, userProfile);
       setAnalysis(aiResult);
+
+      // --- 自動儲存機制 ---
+      const jobId = uuidv4();
+      const newJob: JobEntry = {
+        id: jobId,
+        url: result.url,
+        title: result.title,
+        company: result.company,
+        salaryRange: aiResult.extractedSalary || result.salary,
+        location: aiResult.extractedLocation || result.location,
+        platform: result.platform,
+        status: 'saved',
+        analysis: aiResult,
+        createdAt: new Date().toISOString()
+      };
+      await addJob(newJob);
+      setSavedJobId(jobId);
+      setJobSaved(true);
     } catch (err) {
       if (err instanceof Error && err.name === 'QuotaExceededError') {
         setMode('trial_exceeded');
@@ -119,25 +138,20 @@ const PopupContent = () => {
     initDetection();
   }, [contextLoading]);
 
-  const handleSaveJob = async () => {
-    if (!jobData || !analysis) return;
-    const newJob: JobEntry = {
-      id: uuidv4(),
-      url: jobData.url,
-      title: jobData.title,
-      company: jobData.company,
-      salaryRange: analysis.extractedSalary || jobData.salary,
-      location: analysis.extractedLocation || jobData.location,
-      platform: jobData.platform,
-      status: 'saved',
-      analysis: analysis,
-      createdAt: new Date().toISOString()
-    };
-    await addJob(newJob);
-    setJobSaved(true);
-    setTimeout(() => {
-      chrome.tabs.create({ url: chrome.runtime.getURL('options.html#dashboard') });
-    }, 1000);
+  const goToDashboard = () => {
+    chrome.tabs.create({ url: chrome.runtime.getURL('options.html#dashboard') });
+  };
+
+  const handleDeleteAnalysis = async () => {
+    if (!savedJobId) return;
+    if (confirm('確定要捨棄本次分析結果並從資料庫刪除嗎？')) {
+      await deleteJob(savedJobId);
+      setSavedJobId(null);
+      setJobSaved(false);
+      setAnalysis(null);
+      setJobData(null);
+      setMode('unknown');
+    }
   };
 
   const handleUpdateProfile = async () => {
@@ -148,6 +162,62 @@ const PopupContent = () => {
       chrome.tabs.create({ url: chrome.runtime.getURL('options.html#settings?remind=location') });
     }, 1000);
   };
+
+  const getModelLabel = () => {
+    if (!userProfile) return '';
+    const hasKey = userProfile.apiKey || userProfile.geminiApiKey;
+    if (!hasKey) return 'gpt-5-mini (Trial)';
+
+    if (userProfile.apiProvider === 'gemini') {
+      return userProfile.geminiModel || 'gemini-3-flash-preview';
+    }
+    return userProfile.openaiModel || 'gpt-5-mini';
+  };
+
+  const AnalysisLoader = ({ type }: { type: 'job' | 'resume' }) => (
+    <div className="flex flex-col items-center justify-center py-10 space-y-8 w-full">
+      {/* 核心動畫區塊：具備掃描與邊框流光的容器 */}
+      <div className="relative w-48 h-48 rounded-xl border-2 border-primary/20 bg-muted/20 overflow-hidden shadow-inner">
+        {/* 背景矩陣方塊動畫 */}
+        <div className="absolute inset-0 grid grid-cols-6 grid-rows-6 gap-1 p-2">
+          {Array.from({ length: 36 }).map((_, i) => (
+            <div
+              key={i}
+              className="bg-primary/5 rounded-sm animate-matrix-pulse"
+              style={{ animationDelay: `${(i % 6) * 0.1 + Math.floor(i / 6) * 0.1}s` }}
+            />
+          ))}
+        </div>
+
+        {/* 掃描線動畫 */}
+        <div className="absolute left-0 w-full h-1 bg-gradient-to-r from-transparent via-primary to-transparent shadow-[0_0_15px_rgba(var(--primary),0.8)] animate-scan z-10" />
+
+        {/* 中心圖示區域 */}
+        <div className="absolute inset-0 flex items-center justify-center z-20">
+          <div className="p-4 bg-background/80 backdrop-blur-sm rounded-full border border-primary/20 shadow-xl">
+            <Sparkles className="w-10 h-10 text-primary animate-pulse" />
+          </div>
+        </div>
+      </div>
+
+      <div className="text-center space-y-3">
+        <Badge variant="outline" className="text-[10px] font-mono text-slate-500 bg-background/50 backdrop-blur-sm border-primary/20 px-3 py-1">
+          <Sparkles className="w-3 h-3 mr-1.5 text-primary animate-pulse" />
+          {getModelLabel()}
+        </Badge>
+        <div className="space-y-1">
+          <p className="text-sm font-bold tracking-widest uppercase text-slate-600">
+            {type === 'job' ? 'Analyzing Job Data' : 'Extracting Resume Profile'}
+          </p>
+          <div className="flex justify-center gap-1">
+            <span className="w-1.5 h-1.5 rounded-full bg-primary animate-bounce [animation-delay:-0.3s]"></span>
+            <span className="w-1.5 h-1.5 rounded-full bg-primary animate-bounce [animation-delay:-0.15s]"></span>
+            <span className="w-1.5 h-1.5 rounded-full bg-primary animate-bounce"></span>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
 
   if (contextLoading) return <div className="p-8 text-center">Loading context...</div>;
 
@@ -234,11 +304,7 @@ const PopupContent = () => {
         </header>
         <main className="p-4 space-y-4 flex-1 overflow-auto">
           {loading ? (
-            <div className="space-y-4 pt-10 text-center">
-              <Skeleton className="h-4 w-3/4 mx-auto mb-4" />
-              <Skeleton className="h-32 w-full" />
-              <p className="text-muted-foreground animate-pulse">Analyzing Job...</p>
-            </div>
+            <AnalysisLoader type="job" />
           ) : error ? (
             <div className="p-4 bg-destructive/10 text-destructive rounded text-center">
               <XCircle className="w-8 h-8 mx-auto mb-2" />
@@ -279,9 +345,14 @@ const PopupContent = () => {
                 <CardContent className="p-3 text-sm">{analysis.strategicAdvice}</CardContent>
               </Card>
 
-              <Button className="w-full" onClick={handleSaveJob} disabled={jobSaved}>
-                {jobSaved ? <><CheckCircle className="mr-2 w-4 h4" /> Saved & Redirecting...</> : "儲存並前往列表"}
-              </Button>
+              <div className="flex gap-2 w-full">
+                <Button className="flex-1" variant="outline" onClick={handleDeleteAnalysis} disabled={!jobSaved}>
+                  <XCircle className="mr-2 w-4 h-4" /> 刪除分析
+                </Button>
+                <Button className="flex-[2]" onClick={goToDashboard}>
+                  <Search className="mr-2 w-4 h-4" /> 前往列表
+                </Button>
+              </div>
             </>
           ) : null}
         </main>
@@ -298,10 +369,7 @@ const PopupContent = () => {
       </header>
       <main className="p-4 space-y-4 flex-1 overflow-auto">
         {loading ? (
-          <div className="space-y-4 pt-10 text-center">
-            <Skeleton className="h-32 w-full rounded-full w-32 h-32 mx-auto" />
-            <p className="text-muted-foreground animate-pulse">Extracting Profile...</p>
-          </div>
+          <AnalysisLoader type="resume" />
         ) : error ? (
           <div className="p-4 bg-destructive/10 text-destructive rounded text-center">
             <XCircle className="w-8 h-8 mx-auto mb-2" />

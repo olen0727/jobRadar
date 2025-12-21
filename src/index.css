@@ -61,3 +61,36 @@
     padding: 0;
   }
 }
+
+@keyframes scan {
+  from {
+    top: -10%;
+  }
+
+  to {
+    top: 110%;
+  }
+}
+
+@keyframes matrix-pulse {
+
+  0%,
+  100% {
+    opacity: 0.2;
+    transform: scale(1);
+  }
+
+  50% {
+    opacity: 0.8;
+    transform: scale(1.1);
+    background-color: theme('colors.primary.DEFAULT');
+  }
+}
+
+.animate-scan {
+  animation: scan 2s linear infinite;
+}
+
+.animate-matrix-pulse {
+  animation: matrix-pulse 1.5s ease-in-out infinite;
+}
