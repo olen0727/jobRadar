@@ -18,7 +18,7 @@ export const PRICING_RATES = {
 export type PricingModel = keyof typeof PRICING_RATES;
 
 export const calculateCost = (
-    provider: 'openai' | 'gemini',
+    _provider: 'openai' | 'gemini',
     model: string,
     inputTokens: number,
     outputTokens: number

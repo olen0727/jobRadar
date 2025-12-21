@@ -7,7 +7,7 @@ import { Trash2, RefreshCw } from 'lucide-react';
 
 export const UsageStats: React.FC = () => {
     const [logs, setLogs] = useState<UsageLog[]>([]);
-    const [loading, setLoading] = useState(false);
+    const [, setLoading] = useState(false);
 
     const fetchLogs = async () => {
         setLoading(true);

@@ -3,7 +3,6 @@ import { useJobContext } from '../contexts/JobContext';
 import { Card } from '../components/ui/card';
 import { Button } from '../components/ui/button';
 import {
-    ExternalLink,
     CheckCircle,
     XCircle,
     Clock,

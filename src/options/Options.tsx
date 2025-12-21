@@ -2,16 +2,14 @@ import React, { useState } from 'react';
 import { Settings } from './Settings';
 import { UsageStats } from './UsageStats';
 import { Dashboard } from './Dashboard';
-import { useJobContext, JobProvider } from '../contexts/JobContext';
+import { JobProvider } from '../contexts/JobContext';
 import { ToastProvider, useToast } from '../contexts/ToastContext';
-import { Card, CardHeader, CardTitle, CardContent } from '../components/ui/card';
-import { Badge } from '../components/ui/badge';
 import { Button } from '../components/ui/button';
-import { Briefcase, LayoutDashboard, Settings as SettingsIcon, Trash2, ExternalLink, BarChart3, CheckCircle, XCircle } from 'lucide-react';
+import { Briefcase, LayoutDashboard, Settings as SettingsIcon, BarChart3 } from 'lucide-react';
 
 const OptionsContent: React.FC = () => {
     const [view, setView] = useState<'dashboard' | 'settings' | 'usage'>('dashboard');
-    const { showToast, showConfirm } = useToast();
+    const { showConfirm } = useToast();
     const hasShownToast = React.useRef(false);
 
     const handleNavigate = (newView: 'dashboard' | 'settings' | 'usage') => {

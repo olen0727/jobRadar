@@ -82,7 +82,6 @@ export const Settings: React.FC = () => {
             setMessage('Profile saved successfully!');
             setTimeout(() => setMessage(''), 3000);
         } catch (error) {
-            console.error(error);
             setMessage('Failed to save profile.');
         }
     };

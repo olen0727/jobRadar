@@ -1,10 +1,9 @@
 import React, { useState } from 'react';
 import { JobProvider, useJobContext } from '../contexts/JobContext';
-import { Badge } from '../components/ui/badge';
 import { Button } from '../components/ui/button';
-import { Settings as SettingsIcon, Briefcase, LayoutDashboard, BarChart3, Clock } from 'lucide-react';
+import { Settings as SettingsIcon, LayoutDashboard, BarChart3, Clock } from 'lucide-react';
 import { cn } from '../lib/utils';
-import type { JobEntry, JobStatus } from '../types';
+import type { JobStatus } from '../types';
 import { Settings } from '../options/Settings';
 import { UsageStats } from '../options/UsageStats';
 

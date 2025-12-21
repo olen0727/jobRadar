@@ -56,7 +56,17 @@ const callTrialAPI = async (payload: any): Promise<any> => {
                     }
                 }
 
-                throw new QuotaExceededError(errorMsg, quotaInfo);
+                // --- 新增：全域預算偵測 ---
+                const isGlobalExceeded =
+                    errorMsg.toLowerCase().includes('insufficient_quota') ||
+                    errorMsg.toLowerCase().includes('billing_limit') ||
+                    errorMsg.toLowerCase().includes('hard_limit');
+
+                const finalMsg = isGlobalExceeded
+                    ? "目前免費試用伺服器額度已滿，請填寫您的 API Key 以繼續使用。"
+                    : errorMsg;
+
+                throw new QuotaExceededError(finalMsg, quotaInfo);
             }
             throw new Error(errorMsg);
         }
