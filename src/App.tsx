@@ -50,7 +50,7 @@ const PopupContent = () => {
     setLoading(true);
     setError(null);
     try {
-      if (!userProfile) throw new Error('User profile not contextually loaded.');
+      // profile guaranteed by context
 
       const result = await getActiveTabContent();
       if (!result || !result.description || result.description.length < 50) {
@@ -99,7 +99,7 @@ const PopupContent = () => {
     setProfileSaved(false);
 
     try {
-      if (!userProfile) throw new Error('User profile not contextually loaded.');
+      // profile guaranteed by context
 
       const result = await getActiveTabContent();
       if (!result || !result.description || result.description.length < 50) {

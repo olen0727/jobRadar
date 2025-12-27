@@ -8,6 +8,21 @@ interface StorageSchema {
     anonymous_id: string;
 }
 
+export const INITIAL_PROFILE: UserProfile = {
+    name: '新使用者',
+    targetRole: '尚未設定',
+    yearsOfExperience: 0,
+    skills: [],
+    financialGoal: '',
+    preferredWorkStyle: '',
+    homeLocation: '',
+    experience: '',
+    bio: '',
+    apiKey: '',
+    apiProvider: 'openai',
+    openaiModel: 'gpt-5-mini'
+};
+
 export const storage = {
     get: <K extends keyof StorageSchema>(keys: K | K[]): Promise<Pick<StorageSchema, K>> => {
         return new Promise((resolve, reject) => {
@@ -34,9 +49,9 @@ export const storage = {
     },
 
     // Helper to get profile directly
-    getUserProfile: async (): Promise<UserProfile | null> => {
+    getUserProfile: async (): Promise<UserProfile> => {
         const result = await storage.get('user_profile');
-        return result.user_profile || null;
+        return result.user_profile || INITIAL_PROFILE;
     },
 
     // Helper to get jobs directly

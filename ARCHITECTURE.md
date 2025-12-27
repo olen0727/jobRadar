@@ -162,3 +162,21 @@
 **Repository URL**: Local
 **主要聯絡人**: Olen
 **最後更新日期**: 2025-12-21
+
+## 8. 建置與發布 (Build & Distribution)
+
+### 8.1. 生產環境建置 (Production Build)
+- **指令**: `npm run build`
+- **輸出**: `dist/` 資料夾
+- **內容**:
+    - `manifest.json`: 完整定義擴充功能行為。
+    - `icon-*.png`: 必須包含 16x16, 48x48, 128x128 三種尺寸。
+    - `assets/`: 編譯後的 JS/CSS 資源。
+    - `*.html`: 各視窗的進入點。
+
+### 8.2. Chrome Web Store 上架要求
+- **Manifest配置**: 必須包含 `action.default_icon` 以確保 Toolbar 圖標顯示正確。
+- **隱私權政策**: 需強調「本地優先」與「去識別化」試用機制。
+- **權限說明**:
+    - `host_permissions`: 僅限 `api.openai.com`, `generativelanguage.googleapis.com` 與 Supabase 試用端點。
+    - `remote code`: 必須選 **No** (本專案僅打包靜態資源，不執行遠端腳本)。

@@ -1,9 +1,9 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import type { JobEntry, UserProfile } from '../types';
-import { storage } from '../services/storage';
+import { storage, INITIAL_PROFILE } from '../services/storage';
 
 interface JobContextType {
-    userProfile: UserProfile | null;
+    userProfile: UserProfile;
     savedJobs: JobEntry[];
     loading: boolean;
     saveProfile: (profile: UserProfile) => Promise<void>;
@@ -17,7 +17,7 @@ interface JobContextType {
 const JobContext = createContext<JobContextType | undefined>(undefined);
 
 export const JobProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-    const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
+    const [userProfile, setUserProfile] = useState<UserProfile>(INITIAL_PROFILE);
     const [savedJobs, setSavedJobs] = useState<JobEntry[]>([]);
     const [loading, setLoading] = useState(true);
 

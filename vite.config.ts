@@ -6,7 +6,7 @@ const manifest = defineManifest({
   manifest_version: 3,
   name: 'JobRadar AI',
   description: '你的 AI 職缺分析助手：自動估算通勤、分析匹配度與標記風險，讓求職更高效。',
-  version: '1.0.0',
+  version: '1.0.1',
   icons: {
     '16': 'icon-16.png',
     '48': 'icon-48.png',
